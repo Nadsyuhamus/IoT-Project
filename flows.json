@@ -1,0 +1,281 @@
+[
+    {
+        "id": "383d3fb3fe46745a",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "409379e5dc1b0498",
+        "type": "inject",
+        "z": "383d3fb3fe46745a",
+        "name": "Start Ingestion",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 170,
+        "y": 120,
+        "wires": [
+            [
+                "8b6527b6261a53e5"
+            ]
+        ]
+    },
+    {
+        "id": "8a1fa8f32c3e80da",
+        "type": "csv",
+        "z": "383d3fb3fe46745a",
+        "name": "",
+        "spec": "rfc",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 550,
+        "y": 120,
+        "wires": [
+            [
+                "141d1ec4b03cf839"
+            ]
+        ]
+    },
+    {
+        "id": "141d1ec4b03cf839",
+        "type": "function",
+        "z": "383d3fb3fe46745a",
+        "name": "function 1",
+        "func": "// Only send the data if the main features exist\nif (msg.payload.Temperature && msg.payload.Humidity && msg.payload.Soil_Moisture) {\n    return msg; \n}\n// If data is missing, it stops here (Preprocessing Step 1)\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 120,
+        "wires": [
+            [
+                "384245cbd01e0c31"
+            ]
+        ]
+    },
+    {
+        "id": "4c584fd0f12b0fb2",
+        "type": "debug",
+        "z": "383d3fb3fe46745a",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 680,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "8b6527b6261a53e5",
+        "type": "http request",
+        "z": "383d3fb3fe46745a",
+        "name": "Fetch GitHub Dataset",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://raw.githubusercontent.com/jyyhaaa/IoT-Project/refs/heads/main/irrigation_clean.csv",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 380,
+        "y": 120,
+        "wires": [
+            [
+                "8a1fa8f32c3e80da"
+            ]
+        ]
+    },
+    {
+        "id": "cbe583ef464d5e23",
+        "type": "switch",
+        "z": "383d3fb3fe46745a",
+        "name": "",
+        "property": "payload.Soil_Moisture",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lt",
+                "v": "30",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 690,
+        "y": 260,
+        "wires": [
+            [
+                "4c584fd0f12b0fb2"
+            ]
+        ]
+    },
+    {
+        "id": "e6974313ddd753aa",
+        "type": "link in",
+        "z": "383d3fb3fe46745a",
+        "name": "ML Model",
+        "links": [
+            "2b14afc2af428385"
+        ],
+        "x": 1055,
+        "y": 200,
+        "wires": [
+            [
+                "872b4dc20fd91b6d"
+            ]
+        ]
+    },
+    {
+        "id": "872b4dc20fd91b6d",
+        "type": "http request",
+        "z": "383d3fb3fe46745a",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://127.0.0.1:8000/predict",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1170,
+        "y": 200,
+        "wires": [
+            [
+                "105fd887e804d467"
+            ]
+        ]
+    },
+    {
+        "id": "2b14afc2af428385",
+        "type": "link out",
+        "z": "383d3fb3fe46745a",
+        "name": "To ML Model",
+        "mode": "link",
+        "links": [
+            "e6974313ddd753aa"
+        ],
+        "x": 975,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "105fd887e804d467",
+        "type": "debug",
+        "z": "383d3fb3fe46745a",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1160,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "384245cbd01e0c31",
+        "type": "change",
+        "z": "383d3fb3fe46745a",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload.Temperature",
+                "pt": "msg",
+                "to": "$number(payload.Temperature_C)",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "payload.Humidity",
+                "pt": "msg",
+                "to": "$number(payload.Humidity)",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "payload.Soil_Moisture",
+                "pt": "msg",
+                "to": "$number(payload.Soil_Moisture)",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 680,
+        "y": 200,
+        "wires": [
+            [
+                "cbe583ef464d5e23",
+                "04cd9e7d63dc0c98"
+            ]
+        ]
+    },
+    {
+        "id": "04cd9e7d63dc0c98",
+        "type": "function",
+        "z": "383d3fb3fe46745a",
+        "name": "function 2",
+        "func": "if (msg.payload.Temperature > 60) {\n    msg.payload.Temperature = 60;\n}\n\nif (msg.payload.Humidity < 0) {\n    msg.payload.Humidity = 0;\n} else if (msg.payload.Humidity > 100) {\n    msg.payload.Humidity = 100;\n}\n\nif (msg.payload.Soil_Moisture < 0) {\n    msg.payload.Soil_Moisture = 0;\n} else if (msg.payload.Soil_Moisture > 100) {\n    msg.payload.Soil_Moisture = 100;\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 880,
+        "y": 200,
+        "wires": [
+            [
+                "2b14afc2af428385"
+            ]
+        ]
+    }
+]
