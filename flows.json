@@ -1,24 +1,20 @@
 [
     {
-        "id": "383d3fb3fe46745a",
+        "id": "538a03d09de52284",
         "type": "tab",
-        "label": "Flow 1",
+        "label": "ML IoT: Smart Agriculture",
         "disabled": false,
         "info": "",
         "env": []
     },
     {
-        "id": "409379e5dc1b0498",
+        "id": "91dd6c50b288324c",
         "type": "inject",
-        "z": "383d3fb3fe46745a",
+        "z": "538a03d09de52284",
         "name": "Start Ingestion",
         "props": [
             {
                 "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
             }
         ],
         "repeat": "",
@@ -28,80 +24,20 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 170,
+        "x": 330,
         "y": 120,
         "wires": [
             [
-                "8b6527b6261a53e5"
+                "eaa738aefa930512",
+                "03077b60601b6bd3"
             ]
         ]
     },
     {
-        "id": "8a1fa8f32c3e80da",
-        "type": "csv",
-        "z": "383d3fb3fe46745a",
-        "name": "",
-        "spec": "rfc",
-        "sep": ",",
-        "hdrin": true,
-        "hdrout": "none",
-        "multi": "one",
-        "ret": "\\r\\n",
-        "temp": "",
-        "skip": "0",
-        "strings": true,
-        "include_empty_strings": "",
-        "include_null_values": "",
-        "x": 550,
-        "y": 120,
-        "wires": [
-            [
-                "141d1ec4b03cf839"
-            ]
-        ]
-    },
-    {
-        "id": "141d1ec4b03cf839",
-        "type": "function",
-        "z": "383d3fb3fe46745a",
-        "name": "function 1",
-        "func": "// Only send the data if the main features exist\nif (msg.payload.Temperature && msg.payload.Humidity && msg.payload.Soil_Moisture) {\n    return msg; \n}\n// If data is missing, it stops here (Preprocessing Step 1)\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 680,
-        "y": 120,
-        "wires": [
-            [
-                "384245cbd01e0c31"
-            ]
-        ]
-    },
-    {
-        "id": "4c584fd0f12b0fb2",
-        "type": "debug",
-        "z": "383d3fb3fe46745a",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 680,
-        "y": 320,
-        "wires": []
-    },
-    {
-        "id": "8b6527b6261a53e5",
+        "id": "eaa738aefa930512",
         "type": "http request",
-        "z": "383d3fb3fe46745a",
-        "name": "Fetch GitHub Dataset",
+        "z": "538a03d09de52284",
+        "name": "Dataset From Git Repo",
         "method": "GET",
         "ret": "txt",
         "paytoqs": "ignore",
@@ -113,60 +49,117 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 380,
-        "y": 120,
+        "x": 290,
+        "y": 180,
         "wires": [
             [
-                "8a1fa8f32c3e80da"
+                "c758f8cfe4f5f9fb"
             ]
         ]
     },
     {
-        "id": "cbe583ef464d5e23",
-        "type": "switch",
-        "z": "383d3fb3fe46745a",
-        "name": "",
-        "property": "payload.Soil_Moisture",
-        "propertyType": "msg",
+        "id": "c758f8cfe4f5f9fb",
+        "type": "csv",
+        "z": "538a03d09de52284",
+        "name": "CSV file",
+        "spec": "rfc",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": false,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 240,
+        "y": 240,
+        "wires": [
+            [
+                "b9d751e4238a3c46"
+            ]
+        ]
+    },
+    {
+        "id": "e5e8134bdb5e0df5",
+        "type": "function",
+        "z": "538a03d09de52284",
+        "name": "Preprocessing and Cleaning",
+        "func": "if (msg.payload.Temperature_C && !isNaN(parseFloat(msg.payload.Temperature_C))) {\n    \n    if (msg.payload.Temperature_C > 60) msg.payload.Temperature_C = 60;\n    \n    msg.payload.Humidity = Math.min(Math.max(msg.payload.Humidity, 0), 100);\n    msg.payload.Soil_Moisture = Math.min(Math.max(msg.payload.Soil_Moisture, 0), 100);\n\n    return msg; \n}\nreturn null; ",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 300,
+        "wires": [
+            [
+                "d7303993d2f7988e"
+            ]
+        ]
+    },
+    {
+        "id": "d7303993d2f7988e",
+        "type": "change",
+        "z": "538a03d09de52284",
+        "name": "Feature Creation",
         "rules": [
             {
-                "t": "lt",
-                "v": "30",
-                "vt": "str"
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{  \"Temperature\": $number(payload.Temperature_C),  \"Humidity\": $number(payload.Humidity),  \"Soil_Moisture\": $number(payload.Soil_Moisture)}",
+                "tot": "jsonata"
             }
         ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 1,
-        "x": 690,
-        "y": 260,
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 710,
+        "y": 300,
         "wires": [
             [
-                "4c584fd0f12b0fb2"
+                "4a7be9b472af7cd9"
             ]
         ]
     },
     {
-        "id": "e6974313ddd753aa",
-        "type": "link in",
-        "z": "383d3fb3fe46745a",
-        "name": "ML Model",
-        "links": [
-            "2b14afc2af428385"
+        "id": "4a7be9b472af7cd9",
+        "type": "change",
+        "z": "538a03d09de52284",
+        "name": "Headers",
+        "rules": [
+            {
+                "t": "set",
+                "p": "headers",
+                "pt": "msg",
+                "to": "{\"content-type\":\"application/json\"}",
+                "tot": "json"
+            }
         ],
-        "x": 1055,
-        "y": 200,
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 720,
+        "y": 360,
         "wires": [
             [
-                "872b4dc20fd91b6d"
+                "079ca1d8bbcff015"
             ]
         ]
     },
     {
-        "id": "872b4dc20fd91b6d",
+        "id": "079ca1d8bbcff015",
         "type": "http request",
-        "z": "383d3fb3fe46745a",
-        "name": "",
+        "z": "538a03d09de52284",
+        "name": "ML Prediction",
         "method": "POST",
         "ret": "obj",
         "paytoqs": "ignore",
@@ -178,70 +171,218 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 1170,
-        "y": 200,
+        "x": 1020,
+        "y": 300,
         "wires": [
             [
-                "105fd887e804d467"
+                "500813c440fdf685"
             ]
         ]
     },
     {
-        "id": "2b14afc2af428385",
-        "type": "link out",
-        "z": "383d3fb3fe46745a",
-        "name": "To ML Model",
-        "mode": "link",
-        "links": [
-            "e6974313ddd753aa"
+        "id": "736aa59b2008c6ac",
+        "type": "ui-gauge",
+        "z": "538a03d09de52284",
+        "name": "Soil Moisture",
+        "group": "c9d0672fca653a8b",
+        "order": 3,
+        "value": "payload",
+        "valueType": "msg",
+        "width": 3,
+        "height": 3,
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Soil Moisture (%)",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "%",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "value"
+            },
+            {
+                "from": "21",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "81",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            }
         ],
-        "x": 975,
-        "y": 200,
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 1590,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4f4f5b25282f8f7b",
+        "type": "ui-chart",
+        "z": "538a03d09de52284",
+        "group": "c9d0672fca653a8b",
+        "name": "Irrigation Prediction Trend",
+        "label": "Irrigation Prediction Trend",
+        "order": 2,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "auto",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "",
+        "yAxisProperty": "payload.irrigation_prediction",
+        "yAxisPropertyType": "msg",
+        "ymin": "",
+        "ymax": "",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "circle",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "3600",
+        "removeOlderPoints": "",
+        "colors": [
+            "#0095ff",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 1550,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "44199dd62a71bc24",
+        "type": "ui-text",
+        "z": "538a03d09de52284",
+        "group": "c9d0672fca653a8b",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "Valve Status",
+        "label": "Valve Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "value": "payload.irrigation_recommended ? \"OPEN (Watering)\" : \"CLOSED (Idle)\"",
+        "valueType": "jsonata",
+        "x": 1310,
+        "y": 400,
         "wires": []
     },
     {
-        "id": "105fd887e804d467",
-        "type": "debug",
-        "z": "383d3fb3fe46745a",
-        "name": "debug 2",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1160,
-        "y": 280,
-        "wires": []
+        "id": "500813c440fdf685",
+        "type": "switch",
+        "z": "538a03d09de52284",
+        "name": "Safety check",
+        "property": "payload.features_received",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 990,
+        "y": 360,
+        "wires": [
+            [
+                "44199dd62a71bc24",
+                "4ff92002b3c2e295",
+                "50bf70ba5a22b589",
+                "e02698d1ce410251",
+                "9a3bc868dd3e80f1"
+            ]
+        ]
     },
     {
-        "id": "384245cbd01e0c31",
+        "id": "b9d751e4238a3c46",
+        "type": "delay",
+        "z": "538a03d09de52284",
+        "name": "Rate Limit",
+        "pauseType": "rate",
+        "timeout": "20",
+        "timeoutUnits": "seconds",
+        "rate": "50",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 240,
+        "y": 300,
+        "wires": [
+            [
+                "e5e8134bdb5e0df5"
+            ]
+        ]
+    },
+    {
+        "id": "4ff92002b3c2e295",
         "type": "change",
-        "z": "383d3fb3fe46745a",
-        "name": "",
+        "z": "538a03d09de52284",
+        "name": "Irrigation Need",
         "rules": [
             {
                 "t": "set",
-                "p": "payload.Temperature",
+                "p": "topic",
                 "pt": "msg",
-                "to": "$number(payload.Temperature_C)",
-                "tot": "jsonata"
-            },
-            {
-                "t": "set",
-                "p": "payload.Humidity",
-                "pt": "msg",
-                "to": "$number(payload.Humidity)",
-                "tot": "jsonata"
-            },
-            {
-                "t": "set",
-                "p": "payload.Soil_Moisture",
-                "pt": "msg",
-                "to": "$number(payload.Soil_Moisture)",
-                "tot": "jsonata"
+                "to": "Irrigation Need",
+                "tot": "str"
             }
         ],
         "action": "",
@@ -249,33 +390,222 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 680,
-        "y": 200,
+        "x": 1320,
+        "y": 280,
         "wires": [
             [
-                "cbe583ef464d5e23",
-                "04cd9e7d63dc0c98"
+                "4f4f5b25282f8f7b"
             ]
         ]
     },
     {
-        "id": "04cd9e7d63dc0c98",
-        "type": "function",
-        "z": "383d3fb3fe46745a",
-        "name": "function 2",
-        "func": "if (msg.payload.Temperature > 60) {\n    msg.payload.Temperature = 60;\n}\n\nif (msg.payload.Humidity < 0) {\n    msg.payload.Humidity = 0;\n} else if (msg.payload.Humidity > 100) {\n    msg.payload.Humidity = 100;\n}\n\nif (msg.payload.Soil_Moisture < 0) {\n    msg.payload.Soil_Moisture = 0;\n} else if (msg.payload.Soil_Moisture > 100) {\n    msg.payload.Soil_Moisture = 100;\n}\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 880,
-        "y": 200,
+        "id": "50bf70ba5a22b589",
+        "type": "change",
+        "z": "538a03d09de52284",
+        "name": "Extract Soil Moisture",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.features_received.Soil_Moisture",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1340,
+        "y": 340,
         "wires": [
             [
-                "2b14afc2af428385"
+                "736aa59b2008c6ac",
+                "27fa7906cc8f9cb7"
             ]
         ]
+    },
+    {
+        "id": "e02698d1ce410251",
+        "type": "ui-text",
+        "z": "538a03d09de52284",
+        "group": "c9d0672fca653a8b",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "ui-text",
+        "label": "Baseline Status (Rule-Based)",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "value": "payload.baseline_triggered ? \"NEED WATER\" : \"STABLE\"",
+        "valueType": "jsonata",
+        "x": 1290,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "03077b60601b6bd3",
+        "type": "change",
+        "z": "538a03d09de52284",
+        "name": "Reset Chart Data",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[]",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 790,
+        "y": 180,
+        "wires": [
+            [
+                "4f4f5b25282f8f7b"
+            ]
+        ]
+    },
+    {
+        "id": "27fa7906cc8f9cb7",
+        "type": "debug",
+        "z": "538a03d09de52284",
+        "name": "Debug 1: Baseline Alert (Soil < 30%)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1670,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "9a3bc868dd3e80f1",
+        "type": "debug",
+        "z": "538a03d09de52284",
+        "name": "Debug 2: ML Prediction Output",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 970,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "c9d0672fca653a8b",
+        "type": "ui-group",
+        "name": "Monitoring",
+        "page": "6643e91a02ff6d78",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "6643e91a02ff6d78",
+        "type": "ui-page",
+        "name": "Page 1",
+        "ui": "b6dd9f345a32be64",
+        "path": "/page1",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "1ea4850cda31dbea",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": 0,
+                "cols": 3
+            },
+            {
+                "name": "Tablet",
+                "px": 576,
+                "cols": 6
+            },
+            {
+                "name": "Small Desktop",
+                "px": 768,
+                "cols": 9
+            },
+            {
+                "name": "Desktop",
+                "px": 1024,
+                "cols": 12
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "b6dd9f345a32be64",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "page",
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": false
+    },
+    {
+        "id": "1ea4850cda31dbea",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094CE",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "94303aa594b301b8",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "@flowfuse/node-red-dashboard": "1.30.2"
+        }
     }
 ]
