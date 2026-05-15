@@ -8,6 +8,123 @@
         "env": []
     },
     {
+        "id": "402f59a675c6d550",
+        "type": "ui-theme",
+        "name": "Agriculture Theme",
+        "colors": {
+            "surface": "#8ab792",
+            "primary": "#45b814",
+            "bgPage": "#d2f0cc",
+            "groupBg": "#fffdeb",
+            "groupOutline": "#187c43"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "07a3a38a548b9602",
+        "type": "ui-base",
+        "name": "Smart Agriculture",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "page",
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": true
+    },
+    {
+        "id": "6643e91a02ff6d78",
+        "type": "ui-page",
+        "name": "Smart Agriculture: Irrigation Prediction",
+        "ui": "07a3a38a548b9602",
+        "path": "/page1",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "402f59a675c6d550",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "c9d0672fca653a8b",
+        "type": "ui-group",
+        "name": "Live Monitoring",
+        "page": "6643e91a02ff6d78",
+        "width": 12,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "7926beeebdf902be",
+        "type": "ui-group",
+        "name": "Sensor Telemetry",
+        "page": "6643e91a02ff6d78",
+        "width": 12,
+        "height": 1,
+        "order": 2,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "84beee59db18fa1f",
+        "type": "ui-group",
+        "name": "Operational Insight",
+        "page": "6643e91a02ff6d78",
+        "width": 12,
+        "height": 1,
+        "order": 3,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
         "id": "91dd6c50b288324c",
         "type": "inject",
         "z": "538a03d09de52284",
@@ -24,8 +141,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 330,
-        "y": 120,
+        "x": 180,
+        "y": 80,
         "wires": [
             [
                 "eaa738aefa930512",
@@ -49,8 +166,8 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 290,
-        "y": 180,
+        "x": 210,
+        "y": 140,
         "wires": [
             [
                 "c758f8cfe4f5f9fb"
@@ -73,8 +190,8 @@
         "strings": false,
         "include_empty_strings": "",
         "include_null_values": "",
-        "x": 240,
-        "y": 240,
+        "x": 160,
+        "y": 200,
         "wires": [
             [
                 "b9d751e4238a3c46"
@@ -86,15 +203,15 @@
         "type": "function",
         "z": "538a03d09de52284",
         "name": "Preprocessing and Cleaning",
-        "func": "if (msg.payload.Temperature_C && !isNaN(parseFloat(msg.payload.Temperature_C))) {\n    \n    if (msg.payload.Temperature_C > 60) msg.payload.Temperature_C = 60;\n    \n    msg.payload.Humidity = Math.min(Math.max(msg.payload.Humidity, 0), 100);\n    msg.payload.Soil_Moisture = Math.min(Math.max(msg.payload.Soil_Moisture, 0), 100);\n\n    return msg; \n}\nreturn null; ",
+        "func": "if (msg.payload.Temperature_C && !isNaN(parseFloat(msg.payload.Temperature_C))) {\n    \n    if (msg.payload.Temperature_C > 60) msg.payload.Temperature_C = 60;\n    \n    msg.payload.Humidity = Math.min(Math.max(msg.payload.Humidity, 0), 100);\n    msg.payload.Soil_Moisture = Math.min(Math.max(msg.payload.Soil_Moisture, 0), 100);\n    msg.payload.Temperature = msg.payload.Temperature_C; // Standardize name for ML;\n\n    return msg; \n}\nreturn null; ",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 460,
-        "y": 300,
+        "x": 540,
+        "y": 260,
         "wires": [
             [
                 "d7303993d2f7988e"
@@ -120,8 +237,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 710,
-        "y": 300,
+        "x": 570,
+        "y": 320,
         "wires": [
             [
                 "4a7be9b472af7cd9"
@@ -147,8 +264,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 720,
-        "y": 360,
+        "x": 600,
+        "y": 380,
         "wires": [
             [
                 "079ca1d8bbcff015"
@@ -171,11 +288,11 @@
         "authType": "",
         "senderr": false,
         "headers": [],
-        "x": 1020,
-        "y": 300,
+        "x": 800,
+        "y": 380,
         "wires": [
             [
-                "500813c440fdf685"
+                "e2f598daf00c22c6"
             ]
         ]
     },
@@ -184,15 +301,15 @@
         "type": "ui-gauge",
         "z": "538a03d09de52284",
         "name": "Soil Moisture",
-        "group": "c9d0672fca653a8b",
-        "order": 3,
+        "group": "7926beeebdf902be",
+        "order": 2,
         "value": "payload",
         "valueType": "msg",
         "width": 3,
         "height": 3,
         "gtype": "gauge-half",
         "gstyle": "needle",
-        "title": "Soil Moisture (%)",
+        "title": "Soil Moisture",
         "alwaysShowTitle": false,
         "floatingTitlePosition": "top-left",
         "units": "%",
@@ -227,8 +344,8 @@
         "styleRounded": true,
         "styleGlow": false,
         "className": "",
-        "x": 1590,
-        "y": 300,
+        "x": 1490,
+        "y": 240,
         "wires": [
             []
         ]
@@ -237,10 +354,10 @@
         "id": "4f4f5b25282f8f7b",
         "type": "ui-chart",
         "z": "538a03d09de52284",
-        "group": "c9d0672fca653a8b",
+        "group": "84beee59db18fa1f",
         "name": "Irrigation Prediction Trend",
         "label": "Irrigation Prediction Trend",
-        "order": 2,
+        "order": 1,
         "chartType": "line",
         "category": "topic",
         "categoryType": "msg",
@@ -263,8 +380,8 @@
         "pointShape": "circle",
         "pointRadius": 4,
         "showLegend": true,
-        "removeOlder": 1,
-        "removeOlderUnit": "3600",
+        "removeOlder": "10",
+        "removeOlderUnit": "60",
         "removeOlderPoints": "",
         "colors": [
             "#0095ff",
@@ -289,60 +406,54 @@
         "height": 8,
         "className": "",
         "interpolation": "linear",
-        "x": 1550,
-        "y": 240,
+        "x": 1530,
+        "y": 80,
         "wires": [
             []
         ]
-    },
-    {
-        "id": "44199dd62a71bc24",
-        "type": "ui-text",
-        "z": "538a03d09de52284",
-        "group": "c9d0672fca653a8b",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "name": "Valve Status",
-        "label": "Valve Status",
-        "format": "{{msg.payload}}",
-        "layout": "row-spread",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#717171",
-        "wrapText": false,
-        "className": "",
-        "value": "payload.irrigation_recommended ? \"OPEN (Watering)\" : \"CLOSED (Idle)\"",
-        "valueType": "jsonata",
-        "x": 1310,
-        "y": 400,
-        "wires": []
     },
     {
         "id": "500813c440fdf685",
         "type": "switch",
         "z": "538a03d09de52284",
         "name": "Safety check",
-        "property": "payload.features_received",
+        "property": "payload",
         "propertyType": "msg",
         "rules": [
             {
-                "t": "nnull"
+                "t": "eq",
+                "v": "ERROR",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ON",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "OFF",
+                "vt": "str"
             }
         ],
         "checkall": "true",
         "repair": false,
-        "outputs": 1,
-        "x": 990,
-        "y": 360,
+        "outputs": 3,
+        "x": 1270,
+        "y": 440,
         "wires": [
             [
-                "44199dd62a71bc24",
-                "4ff92002b3c2e295",
-                "50bf70ba5a22b589",
-                "e02698d1ce410251",
-                "9a3bc868dd3e80f1"
+                "ffbeeed6dcede55b",
+                "35430a0f0c84cb72",
+                "b3dcb874aa2af5f5"
+            ],
+            [
+                "35430a0f0c84cb72",
+                "b3dcb874aa2af5f5"
+            ],
+            [
+                "35430a0f0c84cb72",
+                "b3dcb874aa2af5f5"
             ]
         ]
     },
@@ -363,92 +474,13 @@
         "drop": false,
         "allowrate": false,
         "outputs": 1,
-        "x": 240,
-        "y": 300,
+        "x": 160,
+        "y": 260,
         "wires": [
             [
                 "e5e8134bdb5e0df5"
             ]
         ]
-    },
-    {
-        "id": "4ff92002b3c2e295",
-        "type": "change",
-        "z": "538a03d09de52284",
-        "name": "Irrigation Need",
-        "rules": [
-            {
-                "t": "set",
-                "p": "topic",
-                "pt": "msg",
-                "to": "Irrigation Need",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 1320,
-        "y": 280,
-        "wires": [
-            [
-                "4f4f5b25282f8f7b"
-            ]
-        ]
-    },
-    {
-        "id": "50bf70ba5a22b589",
-        "type": "change",
-        "z": "538a03d09de52284",
-        "name": "Extract Soil Moisture",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "payload.features_received.Soil_Moisture",
-                "tot": "msg"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 1340,
-        "y": 340,
-        "wires": [
-            [
-                "736aa59b2008c6ac",
-                "27fa7906cc8f9cb7"
-            ]
-        ]
-    },
-    {
-        "id": "e02698d1ce410251",
-        "type": "ui-text",
-        "z": "538a03d09de52284",
-        "group": "c9d0672fca653a8b",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "name": "ui-text",
-        "label": "Baseline Status (Rule-Based)",
-        "format": "{{msg.payload}}",
-        "layout": "row-spread",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#717171",
-        "wrapText": false,
-        "className": "",
-        "value": "payload.baseline_triggered ? \"NEED WATER\" : \"STABLE\"",
-        "valueType": "jsonata",
-        "x": 1290,
-        "y": 460,
-        "wires": []
     },
     {
         "id": "03077b60601b6bd3",
@@ -470,7 +502,7 @@
         "to": "",
         "reg": false,
         "x": 790,
-        "y": 180,
+        "y": 80,
         "wires": [
             [
                 "4f4f5b25282f8f7b"
@@ -490,8 +522,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1670,
-        "y": 360,
+        "x": 1570,
+        "y": 200,
         "wires": []
     },
     {
@@ -507,105 +539,560 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 970,
-        "y": 460,
+        "x": 1330,
+        "y": 380,
         "wires": []
     },
     {
-        "id": "c9d0672fca653a8b",
-        "type": "ui-group",
-        "name": "Monitoring",
-        "page": "6643e91a02ff6d78",
-        "width": 6,
-        "height": 1,
-        "order": 1,
-        "showTitle": true,
-        "className": "",
-        "visible": "true",
-        "disabled": "false",
-        "groupType": "default"
+        "id": "e2f598daf00c22c6",
+        "type": "function",
+        "z": "538a03d09de52284",
+        "name": "System Integration",
+        "func": "// 1. Safe Data Extraction from FastAPI\nconst data = msg.payload || {};\nconst sensors = data.features_received || {};\nconst prediction = data.irrigation_prediction || 0;\nconst baseline = data.baseline_triggered;\n\nconst temp = sensors.Temperature ?? 0;\nconst moist = sensors.Soil_Moisture ?? 0;\n\n// 2. Contextual AI Decision\n// Rule: Use the API's 0.5 standard recommendation OR \n// trigger a 'Smart Action' if it's hot (>50C) and prediction is >0.40\nconst ml_decision = data.irrigation_recommended || (prediction >= 0.40 && temp > 50);\n\n// 3. Safety Logic\nlet sensorError = (temp >= 60 || moist > 100 || moist < 0 || isNaN(temp));\n\n// 4. Status Priority Logic (Fulfills Baseline Comparison requirement)\nlet statusMsg = \"\";\nif (sensorError) {\n    statusMsg = \"CRITICAL: Sensor Error. System Locked.\";\n} else if (ml_decision && !baseline && temp > 50) {\n    // Triggers ONLY during high heat stress\n    statusMsg = \"AI SMART ACTION: Heatwave detected (Moisture >30%)\";\n} else if (ml_decision) {\n    // Triggers for standard drying (Baseline or standard ML recommendation)\n    statusMsg = \"Irrigation Active\";\n} else if (!ml_decision && baseline) {\n    // AI avoids watering despite low moisture (e.g. high humidity)\n    statusMsg = \"AI WATER SAVING: Optimal conditions. Skipping.\";\n} else {\n    statusMsg = \"System Standby (Healthy)\";\n}\n\n// 5. Output Mapping\nconst gaugeMsgs = [\n    { payload: Number((prediction * 100).toFixed(1)), topic: \"Prediction\" },\n    { payload: Number(temp.toFixed(1)), topic: \"Temperature\" },\n    { payload: Number(sensors.Humidity ?? 0), topic: \"Humidity\" },\n    { payload: Number(moist.toFixed(1)), topic: \"Moisture\" }\n];\n\nconst controlMsg = { payload: sensorError ? \"ERROR\" : (ml_decision ? \"ON\" : \"OFF\") };\nconst alertMsg = { payload: statusMsg };\n\nreturn [gaugeMsgs, controlMsg, alertMsg];",
+        "outputs": 3,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1010,
+        "y": 380,
+        "wires": [
+            [
+                "9a3bc868dd3e80f1",
+                "e8fc0a1fa43782ce"
+            ],
+            [
+                "500813c440fdf685"
+            ],
+            [
+                "21655eeffa2ace42",
+                "fa77a6ac9ae44030"
+            ]
+        ]
     },
     {
-        "id": "6643e91a02ff6d78",
-        "type": "ui-page",
-        "name": "Page 1",
-        "ui": "b6dd9f345a32be64",
-        "path": "/page1",
-        "icon": "home",
-        "layout": "grid",
-        "theme": "1ea4850cda31dbea",
-        "breakpoints": [
+        "id": "5c10b71d536795fb",
+        "type": "ui-gauge",
+        "z": "538a03d09de52284",
+        "name": "Temperature",
+        "group": "7926beeebdf902be",
+        "order": 3,
+        "value": "payload",
+        "valueType": "msg",
+        "width": 3,
+        "height": 3,
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Temperature",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "Celcius",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
             {
-                "name": "Default",
-                "px": 0,
-                "cols": 3
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
             },
             {
-                "name": "Tablet",
-                "px": 576,
-                "cols": 6
+                "from": "4",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
             },
             {
-                "name": "Small Desktop",
-                "px": 768,
-                "cols": 9
-            },
-            {
-                "name": "Desktop",
-                "px": 1024,
-                "cols": 12
+                "from": "7",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
             }
         ],
-        "order": 1,
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
         "className": "",
-        "visible": "true",
-        "disabled": "false"
+        "x": 1490,
+        "y": 280,
+        "wires": [
+            []
+        ]
     },
     {
-        "id": "b6dd9f345a32be64",
-        "type": "ui-base",
-        "name": "My Dashboard",
-        "path": "/dashboard",
-        "appIcon": "",
-        "includeClientData": true,
-        "acceptsClientConfig": [
-            "ui-notification",
-            "ui-control"
+        "id": "7d8c9cffb5bc0063",
+        "type": "ui-gauge",
+        "z": "538a03d09de52284",
+        "name": "Humidity",
+        "group": "7926beeebdf902be",
+        "order": 4,
+        "value": "payload",
+        "valueType": "msg",
+        "width": 3,
+        "height": 3,
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Humidity",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "%",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "4",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "7",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
         ],
-        "showPathInSidebar": false,
-        "headerContent": "page",
-        "navigationStyle": "default",
-        "titleBarStyle": "default",
-        "showReconnectNotification": true,
-        "notificationDisplayTime": 1,
-        "showDisconnectNotification": true,
-        "allowInstall": false
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 1480,
+        "y": 320,
+        "wires": [
+            []
+        ]
     },
     {
-        "id": "1ea4850cda31dbea",
-        "type": "ui-theme",
-        "name": "Default Theme",
-        "colors": {
-            "surface": "#ffffff",
-            "primary": "#0094CE",
-            "bgPage": "#eeeeee",
-            "groupBg": "#ffffff",
-            "groupOutline": "#cccccc"
-        },
-        "sizes": {
-            "density": "default",
-            "pagePadding": "12px",
-            "groupGap": "12px",
-            "groupBorderRadius": "4px",
-            "widgetGap": "12px"
-        }
+        "id": "21655eeffa2ace42",
+        "type": "ui-text",
+        "z": "538a03d09de52284",
+        "group": "c9d0672fca653a8b",
+        "order": 2,
+        "width": 12,
+        "height": 0,
+        "name": "Logic Alert",
+        "label": "Logic Alert",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "style": true,
+        "font": "",
+        "fontSize": "20",
+        "color": "#6e6e6e",
+        "wrapText": false,
+        "className": "",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 1270,
+        "y": 500,
+        "wires": []
     },
     {
-        "id": "94303aa594b301b8",
+        "id": "e26cbdea4141c367",
+        "type": "ui-gauge",
+        "z": "538a03d09de52284",
+        "name": "Irrigation Need",
+        "group": "7926beeebdf902be",
+        "order": 1,
+        "value": "payload",
+        "valueType": "msg",
+        "width": 3,
+        "height": 3,
+        "gtype": "gauge-half",
+        "gstyle": "needle",
+        "title": "Irrigation Need",
+        "alwaysShowTitle": false,
+        "floatingTitlePosition": "top-left",
+        "units": "%",
+        "icon": "",
+        "prefix": "",
+        "suffix": "",
+        "segments": [
+            {
+                "from": "0",
+                "color": "#5cd65c",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "4",
+                "color": "#ffc800",
+                "text": "",
+                "textType": "label"
+            },
+            {
+                "from": "7",
+                "color": "#ea5353",
+                "text": "",
+                "textType": "label"
+            }
+        ],
+        "min": 0,
+        "max": "100",
+        "sizeThickness": 16,
+        "sizeGap": 4,
+        "sizeKeyThickness": 8,
+        "styleRounded": true,
+        "styleGlow": false,
+        "className": "",
+        "x": 1500,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e8fc0a1fa43782ce",
+        "type": "switch",
+        "z": "538a03d09de52284",
+        "name": "Topic Router",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "Prediction",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "Moisture",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "Temperature",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "Humidity",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 4,
+        "x": 1270,
+        "y": 200,
+        "wires": [
+            [
+                "4f4f5b25282f8f7b",
+                "e26cbdea4141c367",
+                "41b3ef8aca7a69b3"
+            ],
+            [
+                "27fa7906cc8f9cb7",
+                "736aa59b2008c6ac",
+                "41b3ef8aca7a69b3"
+            ],
+            [
+                "5c10b71d536795fb"
+            ],
+            [
+                "7d8c9cffb5bc0063"
+            ]
+        ]
+    },
+    {
+        "id": "ffbeeed6dcede55b",
+        "type": "ui-notification",
+        "z": "538a03d09de52284",
+        "ui": "07a3a38a548b9602",
+        "position": "center center",
+        "colorDefault": false,
+        "color": "#f27373",
+        "displayTime": "30",
+        "showCountdown": true,
+        "outputs": 1,
+        "allowDismiss": true,
+        "dismissText": "Close",
+        "allowConfirm": false,
+        "confirmText": "OK",
+        "raw": false,
+        "className": "",
+        "name": "Safety Alarm",
+        "x": 1490,
+        "y": 440,
+        "wires": [
+            [
+                "84c37e10f8d88eca"
+            ]
+        ]
+    },
+    {
+        "id": "41b3ef8aca7a69b3",
+        "type": "ui-chart",
+        "z": "538a03d09de52284",
+        "group": "84beee59db18fa1f",
+        "name": "AI vs. Nature",
+        "label": "AI vs. Nature Chart",
+        "order": 2,
+        "chartType": "line",
+        "category": "topic",
+        "categoryType": "msg",
+        "xAxisLabel": "",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "auto",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "",
+        "yAxisProperty": "payload",
+        "yAxisPropertyType": "msg",
+        "ymin": "0",
+        "ymax": "100",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "circle",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": "10",
+        "removeOlderUnit": "60",
+        "removeOlderPoints": "",
+        "colors": [
+            "#0095ff",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 1490,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "35430a0f0c84cb72",
+        "type": "ui-led",
+        "z": "538a03d09de52284",
+        "name": "Valve Status",
+        "group": "c9d0672fca653a8b",
+        "order": 1,
+        "width": 12,
+        "height": 0,
+        "label": "Valve Status",
+        "labelPlacement": "right",
+        "labelAlignment": "flex-start",
+        "states": [
+            {
+                "value": "OFF",
+                "valueType": "str",
+                "color": "#ff0000"
+            },
+            {
+                "value": "ON",
+                "valueType": "str",
+                "color": "#17de17"
+            },
+            {
+                "value": "ERROR",
+                "valueType": "str",
+                "color": "#f5a824"
+            }
+        ],
+        "allowColorForValueInMessage": false,
+        "shape": "circle",
+        "showBorder": true,
+        "showGlow": true,
+        "x": 1490,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "fa77a6ac9ae44030",
+        "type": "file",
+        "z": "538a03d09de52284",
+        "name": "Data logging",
+        "filename": "irrigation_log.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1270,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0a5ac87b8372be02",
+        "type": "inject",
+        "z": "538a03d09de52284",
+        "name": "Standard Operations",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"Temperature_C\": 25, \"Humidity\": 70, \"Soil_Moisture\": 65}",
+        "payloadType": "json",
+        "x": 190,
+        "y": 420,
+        "wires": [
+            [
+                "e5e8134bdb5e0df5"
+            ]
+        ]
+    },
+    {
+        "id": "38fa2aa806e7043c",
+        "type": "inject",
+        "z": "538a03d09de52284",
+        "name": "Sensor Failure",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"Temperature_C\": 95, \"Humidity\": -10, \"Soil_Moisture\": 150}",
+        "payloadType": "json",
+        "x": 170,
+        "y": 340,
+        "wires": [
+            [
+                "e5e8134bdb5e0df5"
+            ]
+        ]
+    },
+    {
+        "id": "b3dcb874aa2af5f5",
+        "type": "file",
+        "z": "538a03d09de52284",
+        "name": "Valve History",
+        "filename": "irrigation_log.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1490,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "84c37e10f8d88eca",
+        "type": "debug",
+        "z": "538a03d09de52284",
+        "name": "Debug 3: Notification Output",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1720,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "6c770763137370cf",
+        "type": "inject",
+        "z": "538a03d09de52284",
+        "name": "Drought Condition",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"Temperature_C\": 45, \"Humidity\": 30, \"Soil_Moisture\": 15}",
+        "payloadType": "json",
+        "x": 190,
+        "y": 500,
+        "wires": [
+            [
+                "e5e8134bdb5e0df5"
+            ]
+        ]
+    },
+    {
+        "id": "02e6e5832ece0660",
+        "type": "inject",
+        "z": "538a03d09de52284",
+        "name": "AI Smart Action - Heatwave",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"Temperature_C\": 59.5, \"Humidity\": 10, \"Soil_Moisture\": 30.1}",
+        "payloadType": "json",
+        "x": 220,
+        "y": 580,
+        "wires": [
+            [
+                "e5e8134bdb5e0df5"
+            ]
+        ]
+    },
+    {
+        "id": "19438616e8b4886c",
         "type": "global-config",
         "env": [],
         "modules": {
-            "@flowfuse/node-red-dashboard": "1.30.2"
+            "@flowfuse/node-red-dashboard": "1.30.2",
+            "@flowfuse/node-red-dashboard-2-ui-led": "1.1.0"
         }
     }
 ]
