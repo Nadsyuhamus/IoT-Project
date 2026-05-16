@@ -905,7 +905,7 @@
         "name": "Valve Status",
         "group": "c9d0672fca653a8b",
         "order": 1,
-        "width": 12,
+        "width": "0",
         "height": 0,
         "label": "Valve Status",
         "labelPlacement": "right",
@@ -1087,7 +1087,7 @@
         ]
     },
     {
-        "id": "19438616e8b4886c",
+        "id": "654a0c35c09a0bfc",
         "type": "global-config",
         "env": [],
         "modules": {
