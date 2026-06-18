@@ -1,0 +1,14 @@
+{
+  "Temperature": 43.4,
+  "Humidity": 100.0,
+  "Soil_Moisture": 0.0,
+  "Light": 0.87,
+  "Pump": true,
+  "Scenario": "DROUGHT",
+  "irrigation_prediction": 0.7915,
+  "irrigation_recommended": true,
+  "baseline_triggered": true,
+  "model_used": "XGBoost Regressor v1.0",
+  "timestamp": "2026-06-18T19:32:06.245869",
+  "status": "ok"
+}

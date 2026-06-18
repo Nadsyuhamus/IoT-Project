@@ -1,3 +1,23 @@
+"""
+serial_ml_bridge.py
+────────────────────────────────────────────────────────────────────────
+Smart Agriculture - Irrigation Prediction
+Project 2 Integration: Replaces Node-RED entirely with a single Python
+script that:
+
+  1. Reads live JSON telemetry from the Arduino over Serial (COM7, 9600 baud)
+  2. Loads the Project 1 trained XGBoost model + scaler directly
+  3. Runs the same inference logic as app.py (no FastAPI server needed)
+  4. Writes the latest reading + prediction to a local JSON file
+     -> easy for teammates building a Streamlit dashboard to read
+  5. Simultaneously serves the same data over a tiny REST API
+     -> easy for teammates building a Flutter app to call
+
+Run this script and leave it running during your demo. Both the file
+and the API update continuously every time new Arduino data arrives.
+────────────────────────────────────────────────────────────────────────
+"""
+
 import json
 import threading
 import time
@@ -10,7 +30,7 @@ from fastapi import FastAPI
 import uvicorn
 
 # ── CONFIGURATION ──────────────────────────────────────────────────────
-SERIAL_PORT   = "COM7"          # Confirmed from Device Manager
+SERIAL_PORT   = "COM6"          # Confirmed from Device Manager
 BAUD_RATE     = 9600            # Must match Serial.begin(9600) in Arduino firmware
 MODEL_PATH    = "model_xgb.joblib"
 SCALER_PATH   = "scaler.joblib"
@@ -78,7 +98,7 @@ def serial_loop():
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=2)
     except Exception as e:
         print(f"[ERROR] Could not open {SERIAL_PORT}: {e}")
-        print("[ERROR] Check that the Arduino is plugged in and COM7 is correct.")
+        print("[ERROR] Check that the Arduino is plugged in and COM6 is correct.")
         return
 
     time.sleep(2)  # Allow Arduino to reset after serial connection opens

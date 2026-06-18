@@ -87,14 +87,19 @@ def preprocess(df: pd.DataFrame):
         print(f"       min={raw_target.min():.3f}  max={raw_target.max():.3f}"
               f"  mean={raw_target.mean():.3f}")
     else:
-        # Binary / categorical → encode as 0.0 / 1.0
-        print("[INFO] Mode: BINARY → encoded as 0.0 / 1.0")
+        # Ordinal categorical (Low/Medium/High) → encode as 0.0 / 0.5 / 1.0
+        print("[INFO] Mode: ORDINAL → encoded as 0.0 / 0.5 / 1.0")
         print(f"       Sample values: {list(raw_target.unique()[:8])}")
-        positive = {"yes", "high", "1", "true", "needed", "1.0"}
+        ordinal_map = {"low": 0.0, "medium": 0.5, "high": 1.0}
         df_m["target"] = (
-            raw_target.astype(str).str.strip().str.lower()
-                      .isin(positive)
-        ).astype(float)
+            raw_target.astype(str).str.strip().str.lower().map(ordinal_map)
+        )
+        # Catch any label that didn't match low/medium/high
+        unmapped = df_m["target"].isna().sum()
+        if unmapped > 0:
+            print(f"       [WARNING] {unmapped} rows had unrecognised labels "
+                  f"and were dropped.")
+            df_m = df_m.dropna(subset=["target"]).reset_index(drop=True)
         print(f"       Distribution after encoding: "
               f"{df_m['target'].value_counts().to_dict()}")
 
