@@ -1,0 +1,279 @@
+/**
+ * Smart Agriculture System - Botanical UI Theme Stylesheet
+ * Architecture: CSS Grid & Flexbox Component Modeling
+ * Theme: Natural Organic Dark Mode (Plant & Soil Inspired)
+ */
+
+/* ── 1. GLOBAL VARIABLES & NATURAL PALETTE ───────────────────────────── */
+:root {
+    /* Backgrounds inspired by deep forest shade and rich dark soil */
+    --bg-main: #0b110e;        /* Deep moss black */
+    --bg-card: #131c17;        /* Rich dark foliage green */
+    --border-color: #223129;   /* Muted leaf-vein green */
+    --text-primary: #f4f7f5;   /* Crisp clean linen white */
+    --text-muted: #8ca396;      /* Soft sage green subtext */
+    
+    /* Botanical Status Palette */
+    --sprout-green: #52b788;   /* Healthy vibrant leaf green (Moisture/OK) */
+    --sun-gold: #ffb703;       /* Warm sunlight amber (Temperature) */
+    --rain-blue: #4ea8de;      /* Clean water blue (Humidity) */
+    --clay-red: #e63946;       /* Warning red / Dry clay soil (Fault/Alert) */
+    
+    /* Box & Component Backgrounds */
+    --bg-terminal: #070b09;    /* Deep night shade */
+    --bg-button: #1b2821;      /* Rainforest bark green */
+    --bg-button-hover: #24362c;/* Active foliage green */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 24px;
+    min-height: 100vh;
+}
+
+/* ── 2. HEADER CONTAINER BAR ─────────────────────────────────────────── */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--sprout-green); /* Header highlighted in fresh green */
+}
+
+.system-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+/* Hardware Fault Emergency LED Indicator Dot */
+.led-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.led-off {
+    background-color: #1e2b23;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+.led-on {
+    background-color: var(--clay-red);
+    box-shadow: 0 0 12px var(--clay-red), 0 0 4px var(--clay-red);
+}
+
+/* Network String Modifiers */
+.status-offline { color: var(--text-muted); }
+.status-online { color: var(--sprout-green); font-weight: 600; }
+
+/* ── 3. STRUCTURAL GRID PATTERN ──────────────────────────────────────── */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+/* Base Dashboard Base Widget Card */
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px; /* Smoother organic corners */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card h3 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+/* ── 4. SENSOR DATA TILES (GAUGES) ───────────────────────────────────── */
+.value-display {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--sprout-green); /* Soil moisture is nature green */
+    margin: 8px 0;
+}
+
+/* Dynamically color-code the cards to reflect their environmental domain */
+.gauge-card:nth-of-type(2) .value-display { color: var(--sun-gold); }  /* Temp is golden sun */
+.gauge-card:nth-of-type(3) .value-display { color: var(--rain-blue); }  /* Humidity is water blue */
+
+.sub-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* ── 5. INTELLIGENCE & RULE SYSTEM STATUSES ──────────────────────────── */
+.status-text {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 12px 0;
+    letter-spacing: 0.5px;
+}
+
+.text-neutral { color: var(--text-primary); }
+.text-ok { color: var(--sprout-green); }
+.text-warning { color: var(--sun-gold); }
+.text-alert { color: var(--clay-red); }
+
+/* ── 6. LIVE CONSOLE LOG TERMINAL ────────────────────────────────────── */
+.terminal-card {
+    grid-column: span 1;
+    grid-row: span 2; 
+}
+
+.terminal-box {
+    background-color: var(--bg-terminal);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #74c69d; /* Matrix updates print in soft mint text */
+    padding: 14px;
+    height: 220px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* Custom internal terminal scrollbar design styling */
+.terminal-box::-webkit-scrollbar {
+    width: 6px;
+}
+.terminal-box::-webkit-scrollbar-track {
+    background: var(--bg-terminal);
+}
+.terminal-box::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+/* ── 7. ACTUATOR CONTROLS & UTILITIES ────────────────────────────────── */
+.control-card {
+    grid-column: span 2;
+}
+
+.control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.valve-indicator {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.valve-indicator span {
+    color: var(--text-muted);
+}
+
+.valve-indicator strong {
+    font-weight: 700;
+}
+
+/* Download Log Spreadsheet Button Design Layout */
+.download-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: var(--bg-button);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    cursor: pointer;
+}
+
+.download-btn:hover {
+    background-color: var(--bg-button-hover);
+    border-color: var(--sprout-green);
+}
+
+.download-btn:active {
+    transform: scale(0.98);
+}
+
+.download-btn img {
+    display: block;
+    user-select: none;
+    filter: sepia(20%) hue-rotate(80deg) saturate(120%); /* Blends your icon gracefully with the plant palette */
+}
+
+/* ── 8. REAL-TIME TREND STREAM CHART CARD ────────────────────────────── */
+.chart-card {
+    grid-column: span 3; 
+    margin-top: 4px;
+}
+
+.chart-container {
+    position: relative;
+    height: 260px; 
+    width: 100%;
+}
+
+/* ── 9. RESPONSIVE MEDIA STYLING SUB-ADJUSTMENTS ─────────────────────── */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .terminal-card {
+        grid-column: span 2;
+        grid-row: span 1;
+    }
+    .control-card, .chart-card {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 680px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .terminal-card, .control-card, .chart-card {
+        grid-column: span 1;
+    }
+    .control-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
