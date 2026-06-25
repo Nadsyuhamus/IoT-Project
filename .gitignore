@@ -6,3 +6,8 @@ __pycache__/
 *.pyc
 latest_reading.json
 latest_reading.json
+
+# Ignore temporary IoT telemetry states
+latest_reading.json
+sensor_history_log.csv
+errors.log

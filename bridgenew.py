@@ -20,6 +20,15 @@ import uvicorn
 # ── CONFIGURATION ──────────────────────────────────────────────────────
 BAUD_RATE     = 9600
 MODEL_PATH    = "model_xgb.joblib"
+SCALER_PATH   = "scaler.joblib"
+OUTPUT_FILE   = "latest_reading.json"
+CSV_LOG_FILE  = "sensor_history_log.csv"
+ERROR_LOG     = "errors.log"
+API_HOST      = "0.0.0.0"
+API_PORT      = 8001
+
+# Preprocessing
+SMOOTHING_WINDOW = 5        # moving-average window for soil moisture
 
 # ── AUTO-DETECT SERIAL PORT ────────────────────────────────────────────
 def find_arduino_port():
@@ -38,15 +47,6 @@ def find_arduino_port():
         print(f"[WARN] No Arduino signature found. Trying first available port: {ports[0].device}")
         return ports[0].device
     return None
-SCALER_PATH   = "scaler.joblib"
-OUTPUT_FILE   = "latest_reading.json"
-CSV_LOG_FILE  = "sensor_history_log.csv"
-ERROR_LOG     = "errors.log"
-API_HOST      = "0.0.0.0"
-API_PORT      = 8001
-
-# Preprocessing
-SMOOTHING_WINDOW = 5        # moving-average window for soil moisture
 
 # ── ERROR LOGGING (keeps the live matrix clean, but nothing is hidden) ──
 logging.basicConfig(
@@ -119,28 +119,55 @@ def log_to_csv(temp, hum, moisture_raw, moisture_smoothed, light, pump, scenario
 
 # ── PRINT LIVE FEED MATRIX ─────────────────────────────────────────────
 def print_live_feed_matrix(temp, hum, moisture_raw, moisture_smoothed, light, pump, scenario, result, alert_str, status_str="ONLINE"):
-    """Clears the screen and draws the live telemetry matrix."""
+    """Clears the screen and draws a mathematically locked live telemetry matrix."""
     os.system('cls' if os.name == 'nt' else 'clear')
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     disagree = "** ML vs RULE DISAGREE **" if result["ml_baseline_disagree"] else "agree"
 
+    # Dynamic line calculation for Time and Status row to ensure it equals exactly 62 inside characters
+    time_left = f"  Time: {timestamp}"
+    status_right = f"Status: {status_str}  "
+    header_spaces = 62 - len(time_left) - len(status_right)
+    time_status_row = f"│{time_left}{' ' * header_spaces}{status_right}│"
+
+    # Pre-build each column cell string to calculate total layout lengths precisely
+    temp_left   = f" Temperature   : {temp} °C"
+    score_right = f" ML Pred Score : {result['irrigation_prediction']:.4f}"
+
+    hum_left    = f" Humidity      : {hum} %"
+    ml_right    = f" ML Irrigation : {str(result['irrigation_recommended'])}"
+
+    raw_left    = f" Moist (raw)   : {moisture_raw} %"
+    rule_right  = f" Rule Baseline : {str(result['baseline_triggered'])}"
+
+    smooth_left = f" Moist (smooth): {moisture_smoothed:.1f} %"
+    agree_right = f" Agreement     : {disagree}"
+
+    light_left  = f" Light Level   : {str(light)}"
+    valve_right = f" Valve Action  : {str(pump)}"
+
+    # Build single-column lower components
+    scenario_row = f" Scenario      : {str(scenario)}"
+    alert_row    = f" System Alert  : {alert_str}"
+
+    # Print the absolute locked grid layout
     print("┌──────────────────────────────────────────────────────────────┐")
-    print("│         SMART AGRICULTURE SYSTEMS INTEGRATION MATRIX          │")
-    print(f"│  Time: {timestamp:<21} Status: {status_str:<24} │")
+    print("│         SMART AGRICULTURE SYSTEMS INTEGRATION MATRIX         │")
+    print(time_status_row)
     print("├──────────────────────────────┬───────────────────────────────┤")
     print("│      ENVIRONMENT SENSORS     │       SYSTEM INFERENCE        │")
     print("├──────────────────────────────┼───────────────────────────────┤")
-    print(f"│ Temperature   : {temp:<5} °C   │ ML Pred Score : {result['irrigation_prediction']:<13.4f} │")
-    print(f"│ Humidity      : {hum:<5} %    │ ML Irrigation : {str(result['irrigation_recommended']):<13} │")
-    print(f"│ Moist (raw)   : {moisture_raw:<5} %    │ Rule Baseline : {str(result['baseline_triggered']):<13} │")
-    print(f"│ Moist (smooth): {moisture_smoothed:<5.1f} %    │ Agreement     : {disagree:<13} │")
-    print(f"│ Light Level   : {str(light):<13}│ Valve Action  : {str(pump):<13} │")
+    print(f"│{temp_left:<30}│{score_right:<31}│")
+    print(f"│{hum_left:<30}│{ml_right:<31}│")
+    print(f"│{raw_left:<30}│{rule_right:<31}│")
+    print(f"│{smooth_left:<30}│{agree_right:<31}│")
+    print(f"│{light_left:<30}│{valve_right:<31}│")
     print("├──────────────────────────────┴───────────────────────────────┤")
     print("│                      LIVE SYSTEM LOGIC                       │")
     print("├──────────────────────────────────────────────────────────────┤")
-    print(f"│ Scenario      : {str(scenario):<44} │")
-    print(f"│ System Alert  : {alert_str:<44} │")
+    print(f"│{scenario_row:<62}│")
+    print(f"│{alert_row:<62}│")
     print("└──────────────────────────────────────────────────────────────┘")
     print(f"[INFO] Local CSV backup active: {CSV_LOG_FILE}   Errors -> {ERROR_LOG}")
 
@@ -173,7 +200,7 @@ def write_output_file():
 
 # ── UPDATE STATE ON LOCAL FAULT ────────────────────────────────────────
 def set_fault_state(error_msg):
-    """Updates the internal state representation to declare a system fault."""
+    """Updates the internal state representation to declare a system fault with aligned boxes."""
     with data_lock:
         latest_data.update({
             "status": "fault",
@@ -183,14 +210,22 @@ def set_fault_state(error_msg):
         })
     write_output_file()
     
-    # Render a simplified fault panel directly to the local terminal
     os.system('cls' if os.name == 'nt' else 'clear')
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Lock down the emergency time layout rows
+    time_left = f"  Time: {timestamp}"
+    status_right = "Status: SYSTEM FAULT  "
+    fault_spaces = 62 - len(time_left) - len(status_right)
+    fault_header_row = f"│{time_left}{' ' * fault_spaces}{status_right}│"
+
+    error_row = f"  CRITICAL ERROR: {error_msg}"
+
     print("┌──────────────────────────────────────────────────────────────┐")
-    print("│         SMART AGRICULTURE SYSTEMS INTEGRATION MATRIX          │")
-    print(f"│  Time: {timestamp:<21} Status: SYSTEM FAULT             │")
+    print("│         SMART AGRICULTURE SYSTEMS INTEGRATION MATRIX         │")
+    print(fault_header_row)
     print("├──────────────────────────────────────────────────────────────┤")
-    print(f"│  CRITICAL ERROR: {error_msg:<43} │")
+    print(f"│{error_row:<62}│")
     print("└──────────────────────────────────────────────────────────────┘")
 
 
@@ -245,21 +280,34 @@ def serial_loop():
                 )
 
                 with data_lock:
-                    latest_data.update({
-                        "Temperature": temperature,
-                        "Humidity": humidity,
-                        "Soil_Moisture": soil_moisture,
-                        "Soil_Moisture_Smoothed": round(soil_moisture_smoothed, 2),
-                        "Light": light,
-                        "Pump": pump,
-                        "Scenario": scenario,
-                        "irrigation_prediction": result["irrigation_prediction"],
-                        "irrigation_recommended": result["irrigation_recommended"],
-                        "baseline_triggered": result["baseline_triggered"],
-                        "ml_baseline_disagree": result["ml_baseline_disagree"],
-                        "timestamp": datetime.now().isoformat(),
-                        "status": "ok",
-                    })
+                    # Only update runtime logic values if manual override is inactive
+                    if not latest_data["manual_override"]:
+                        latest_data.update({
+                            "Temperature": temperature,
+                            "Humidity": humidity,
+                            "Soil_Moisture": soil_moisture,
+                            "Soil_Moisture_Smoothed": round(soil_moisture_smoothed, 2),
+                            "Light": light,
+                            "Pump": pump,
+                            "Scenario": scenario,
+                            "irrigation_prediction": result["irrigation_prediction"],
+                            "irrigation_recommended": result["irrigation_recommended"],
+                            "baseline_triggered": result["baseline_triggered"],
+                            "ml_baseline_disagree": result["ml_baseline_disagree"],
+                            "timestamp": datetime.now().isoformat(),
+                            "status": "ok",
+                        })
+                    else:
+                        # If manual override is active, keep background sensor arrays tracking fresh numbers
+                        latest_data.update({
+                            "Temperature": temperature,
+                            "Humidity": humidity,
+                            "Soil_Moisture": soil_moisture,
+                            "Soil_Moisture_Smoothed": round(soil_moisture_smoothed, 2),
+                            "Light": light,
+                            "timestamp": datetime.now().isoformat(),
+                            "status": "ok",
+                        })
 
                 write_output_file()
 
@@ -269,17 +317,21 @@ def serial_loop():
                     logic_alert_str = "ML IRRIGATION ACTIVE"
                 else:
                     logic_alert_str = "SYSTEM OK"
+                
+                if latest_data["manual_override"]:
+                    logic_alert_str = "MANUAL OVERRIDE INTERVENTION"
 
                 # 1. Output Live matrix visualization directly to terminal screen
                 print_live_feed_matrix(
-                    temperature, humidity, soil_moisture, soil_moisture_smoothed,
-                    light, pump, scenario, result, logic_alert_str, status_str="ONLINE"
+                    latest_data["Temperature"], latest_data["Humidity"], latest_data["Soil_Moisture"], 
+                    latest_data["Soil_Moisture_Smoothed"], latest_data["Light"], latest_data["Pump"], 
+                    latest_data["Scenario"], result, logic_alert_str, status_str="ONLINE"
                 )
 
                 # 2. Append state results into your local CSV backup log
                 log_to_csv(
                     temperature, humidity, soil_moisture, soil_moisture_smoothed,
-                    light, pump, scenario, result
+                    light, latest_data["Pump"], latest_data["Scenario"], result
                 )
 
             except (serial.SerialException, OSError) as hardware_disconnect:
@@ -293,14 +345,13 @@ def serial_loop():
                 break  
 
             except json.JSONDecodeError as parse_err:
-                # This captures the exact line and why it failed in your error log
                 logging.warning(f"Malformed JSON packet skipped. Error: {parse_err} | Received String: '{line}'")
                 print("[WARN] Received a partial or corrupt data packet. Skipping frame safely...")
             except Exception as loop_err:
                 logging.warning(f"Unexpected loop error: {loop_err}")
                 time.sleep(1)
 
-# ── REST API (Exposes endpoints for custom UI folder extraction widgets) ──
+# ── REST API ───────────────────────────────────────────────────────────
 app = FastAPI(title="Smart Agriculture - Live Sensor Bridge")
 
 # CORS middleware activation block
@@ -347,7 +398,6 @@ async def update_system_control(payload: dict):
         latest_data["manual_override"] = payload.get("manual_override", False)
         latest_data["manual_pump_state"] = payload.get("manual_pump_state", False)
         
-        # If manual control is true, update the system logic scenario text immediately
         if latest_data["manual_override"]:
             latest_data["Scenario"] = "MANUAL OVERRIDE ACTIVE"
             latest_data["Pump"] = latest_data["manual_pump_state"]
