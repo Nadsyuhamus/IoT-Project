@@ -13,6 +13,7 @@ requests==2.32.3
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 pydantic==2.7.1
+aiofiles==23.2.1
 
 # ── Dev / testing (optional but recommended) ──
 httpx==0.27.0          # async test client for FastAPI
