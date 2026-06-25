@@ -12,3 +12,6 @@
 2026-06-25 17:55:50,829  WARNING  Serial open failed: [Errno 2] could not open port /dev/cu.usbserial-110: [Errno 2] No such file or directory: '/dev/cu.usbserial-110'
 2026-06-25 18:02:28,233  WARNING  Hardware disconnect: read failed: [Errno 6] Device not configured
 2026-06-25 18:02:28,253  WARNING  Serial open failed: [Errno 2] could not open port /dev/cu.usbserial-120: [Errno 2] No such file or directory: '/dev/cu.usbserial-120'
+2026-06-25 19:03:06,570  WARNING  Hardware disconnect: read failed: [Errno 6] Device not configured
+2026-06-25 19:15:08,499  WARNING  Hardware disconnect: read failed: [Errno 6] Device not configured
+2026-06-25 19:35:49,578  WARNING  Hardware disconnect: read failed: [Errno 6] Device not configured

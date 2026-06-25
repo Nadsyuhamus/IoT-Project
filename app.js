@@ -2,13 +2,17 @@
  * Agrino - Core Frontend Engine
  * Language: Modern Vanilla JavaScript (ES6+)
  * Description: Handles real-time API polling, UI element mapping,
- * and dynamic multi-dataset Chart.js updates.
+ * dynamic multi-dataset Chart.js updates with manual features, and active card alert highlighting.
  */
 
 const API_URL = "/latest";
 const FETCH_INTERVAL = 2000;
 
 let telemetryChart = null;
+
+// State trackers for manual control override system
+let localManualOverride = false;
+let localManualPumpState = false;
 
 function initChart() {
     const ctx = document.getElementById('telemetryChart').getContext('2d');
@@ -21,27 +25,27 @@ function initChart() {
                 {
                     label: 'Soil Moisture (%)',
                     data: [],
-                    borderColor: '#00c26f',
-                    backgroundColor: 'rgba(0, 194, 111, 0.08)',
-                    borderWidth: 2,
+                    borderColor: '#10b981', // 🌿 Matched exactly to Soil widget
+                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                    borderWidth: 2.5,
                     tension: 0.2,
                     fill: false
                 },
                 {
                     label: 'Temperature (°C)',
                     data: [],
-                    borderColor: '#d4890a',
-                    backgroundColor: 'rgba(212, 137, 10, 0.08)',
-                    borderWidth: 2,
+                    borderColor: '#f97316', // ☀️ Matched exactly to Temp widget
+                    backgroundColor: 'rgba(249, 115, 22, 0.08)',
+                    borderWidth: 2.5,
                     tension: 0.2,
                     fill: false
                 },
                 {
                     label: 'Humidity (%)',
                     data: [],
-                    borderColor: '#8aaa94',
-                    backgroundColor: 'rgba(138, 170, 148, 0.08)',
-                    borderWidth: 2,
+                    borderColor: '#0284c7', // 💧 Matched exactly to Humidity widget
+                    backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                    borderWidth: 2.5,
                     tension: 0.2,
                     fill: false
                 }
@@ -52,20 +56,24 @@ function initChart() {
             maintainAspectRatio: false,
             scales: {
                 x: {
-                    grid: { color: '#182418' },
-                    ticks: { color: '#3a5242', font: { family: 'JetBrains Mono, monospace', size: 10 } }
+                    grid: { color: '#e2ebd9' }, 
+                    ticks: { color: '#1f412c', font: { family: 'JetBrains Mono, monospace', size: 11 } } 
                 },
                 y: {
                     min: 0,
                     max: 100,
-                    grid: { color: '#182418' },
-                    ticks: { color: '#3a5242', font: { family: 'JetBrains Mono, monospace', size: 10 } }
+                    grid: { color: '#e2ebd9' }, 
+                    ticks: { color: '#1f412c', font: { family: 'JetBrains Mono, monospace', size: 11 } } 
                 }
             },
             plugins: {
                 legend: {
                     position: 'top',
-                    labels: { color: '#8aaa94', boxWidth: 12, font: { size: 11, family: 'Inter, sans-serif' } }
+                    labels: { 
+                        color: '#1f412c', 
+                        boxWidth: 16, 
+                        font: { size: 14, family: 'Inter, sans-serif', weight: '600' } 
+                    }
                 }
             }
         }
@@ -92,14 +100,63 @@ async function fetchLatestData() {
 
         updateConnectionStatus("ONLINE", "status-online", "led-dot led-off");
 
+        // Keep core background sensory values synchronized on the screen
         document.getElementById('val-moisture').innerText = data.Soil_Moisture;
         document.getElementById('val-moisture-smooth').innerText = data.Soil_Moisture_Smoothed;
         document.getElementById('val-temp').innerText = data.Temperature;
         document.getElementById('val-humidity').innerText = data.Humidity;
-        document.getElementById('val-scenario').innerText = data.Scenario;
         document.getElementById('val-ml-score').innerText = Number(data.irrigation_prediction).toFixed(4);
+        document.getElementById('display-irrigation').innerText = data.irrigation_recommended ? "YES" : "NO";
+
+        // ── DYNAMIC CARD CRITICAL HIGHLIGHT CHECKERS ──
+        const moistureCard = document.getElementById('card-moisture');
+        const tempCard     = document.getElementById('card-temp');
+        const humidityCard = document.getElementById('card-humidity');
+
+        // Soil Moisture Highlight: Critical Dry Threshold (< 30%)
+        if (data.Soil_Moisture < 30) {
+            moistureCard.classList.add('alert-highlight-critical');
+        } else {
+            moistureCard.classList.remove('alert-highlight-critical');
+        }
+
+        // Temperature Highlight: Extreme Safety Envelope Boundaries (> 38°C or < 15°C)
+        if (data.Temperature > 38 || data.Temperature < 15) {
+            tempCard.classList.add('alert-highlight-critical');
+        } else {
+            tempCard.classList.remove('alert-highlight-critical');
+        }
+
+        // Humidity Highlight: Air Waterlogging / Extreme Desiccation (> 85% or < 20%)
+        if (data.Humidity > 85 || data.Humidity < 20) {
+            humidityCard.classList.add('alert-highlight-critical');
+        } else {
+            humidityCard.classList.remove('alert-highlight-critical');
+        }
 
         const alertEl = document.getElementById('display-alert');
+
+        // INTERCEPT POINT: If user is actively overriding, bypass ML calculations for pump/scenarios
+        if (localManualOverride) {
+            document.getElementById('val-scenario').innerText = "MANUAL OVERRIDE";
+            if (alertEl) {
+                alertEl.innerText = "MANUAL MODE";
+                alertEl.className = "status-text text-warning";
+            }
+            
+            const pumpLed = document.getElementById('val-pump-led');
+            if (pumpLed) {
+                pumpLed.className = localManualPumpState ? "led-pump led-pump-active" : "led-pump led-pump-closed";
+            }
+
+            const currentTime = new Date().toLocaleTimeString();
+            appendTerminalLog(`[${currentTime}] [MANUAL] Temp=${data.Temperature}°C Moisture=${data.Soil_Moisture}% Pump=${localManualPumpState ? "ON" : "OFF"}`);
+            updateChartTimeline(currentTime, data.Soil_Moisture, data.Temperature, data.Humidity);
+            return; 
+        }
+
+        // Standard automated operation pathway
+        document.getElementById('val-scenario').innerText = data.Scenario;
         const isSensorErr = data.Scenario === "SENS ERR";
 
         if (isSensorErr) {
@@ -120,9 +177,10 @@ async function fetchLatestData() {
             clearAlert();
         }
 
-        document.getElementById('display-irrigation').innerText = data.irrigation_recommended ? "YES" : "NO";
-        document.getElementById('val-pump').innerText = data.Pump ? "ACTIVE 💧" : "CLOSED";
-        document.getElementById('val-pump').style.color = data.Pump ? "#00c26f" : "#3a5242";
+        const pumpLed = document.getElementById('val-pump-led');
+        if (pumpLed) {
+            pumpLed.className = data.Pump ? "led-pump led-pump-active" : "led-pump led-pump-closed";
+        }
 
         const currentTime = new Date().toLocaleTimeString();
         appendTerminalLog(`[${currentTime}] Temp=${data.Temperature}°C  Hum=${data.Humidity}%  Moisture=${data.Soil_Moisture}%  Score=${data.irrigation_prediction}`);
@@ -169,10 +227,9 @@ function triggerFaultUI(errorMessage) {
         alertEl.className = "status-text text-alert";
     }
 
-    const pumpEl = document.getElementById('val-pump');
-    if (pumpEl) {
-        pumpEl.innerText = "CLOSED (SAFETY SHUTDOWN)";
-        pumpEl.style.color = "#e8334a";
+    const pumpLed = document.getElementById('val-pump-led');
+    if (pumpLed) {
+        pumpLed.className = "led-pump led-pump-shutdown";
     }
 
     const messages = {
@@ -185,9 +242,16 @@ function triggerFaultUI(errorMessage) {
 // ── ALERT BANNER ────────────────────────────────────────────────────────────
 
 let alertDismissed = false;
+let currentAlertCondition = null; 
 
 function showAlert(title, message, type) {
+    if (currentAlertCondition !== title) {
+        alertDismissed = false;
+        currentAlertCondition = title;
+    }
+
     if (alertDismissed) return;
+
     const banner = document.getElementById('alert-banner');
     document.getElementById('alert-title').innerText = title;
     document.getElementById('alert-msg').innerText = message;
@@ -198,12 +262,68 @@ function showAlert(title, message, type) {
 
 function clearAlert() {
     alertDismissed = false;
+    currentAlertCondition = null; 
     document.getElementById('alert-banner').className = 'alert-banner alert-hidden';
 }
 
 function dismissAlert() {
     alertDismissed = true;
     document.getElementById('alert-banner').className = 'alert-banner alert-hidden';
+}
+
+// ── SYSTEM CONTROL DISPATCHERS ──────────────────────────────────────────────────
+
+async function sendControlState() {
+    try {
+        await fetch("/control", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                manual_override: localManualOverride,
+                manual_pump_state: localManualPumpState
+            })
+        });
+    } catch (err) {
+        console.error("Failed to transmit manual control state payload:", err);
+    }
+}
+
+function handleOverrideToggle(isChecked) {
+    localManualOverride = isChecked;
+    const pumpBtn = document.getElementById("manual-pump-btn");
+    
+    pumpBtn.disabled = !isChecked;
+    if (!isChecked) {
+        localManualPumpState = false;
+        pumpBtn.innerText = "VALVE: OFF";
+        pumpBtn.style.background = "";
+        pumpBtn.style.color = "";
+    } else {
+        pumpBtn.innerText = "VALVE: FORCE CLOSED";
+        pumpBtn.style.background = "rgba(232, 51, 74, 0.1)";
+        pumpBtn.style.color = "var(--status-crit)";
+    }
+    
+    sendControlState();
+}
+
+function handleManualPumpClick() {
+    if (!localManualOverride) return;
+    
+    localManualPumpState = !localManualPumpState;
+    const pumpBtn = document.getElementById("manual-pump-btn");
+    
+    if (localManualPumpState) {
+        pumpBtn.innerText = "VALVE: FORCE OPEN 💧";
+        pumpBtn.style.background = "var(--accent-dim)";
+        pumpBtn.style.color = "var(--accent)";
+    } else {
+        pumpBtn.innerText = "VALVE: FORCE CLOSED";
+        pumpBtn.style.background = "rgba(232, 51, 74, 0.1)";
+        pumpBtn.style.color = "var(--status-crit)";
+    }
+    
+    sendControlState();
 }
 
 // ── LOG MODAL ────────────────────────────────────────────────────────────────

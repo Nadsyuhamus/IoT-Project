@@ -77,6 +77,8 @@ latest_data = {
     "model_used": "XGBoost Regressor v1.0",
     "timestamp": None,
     "status": "waiting_for_data",
+    "manual_override": False,
+    "manual_pump_state": False,
 }
 data_lock = threading.Lock()
 
@@ -116,8 +118,7 @@ def log_to_csv(temp, hum, moisture_raw, moisture_smoothed, light, pump, scenario
         logging.warning(f"CSV write failed: {e}")
 
 # ── PRINT LIVE FEED MATRIX ─────────────────────────────────────────────
-def print_live_feed_matrix(temp, hum, moisture_raw, moisture_smoothed,
-                           light, pump, scenario, result, alert_str, status_str="ONLINE"):
+def print_live_feed_matrix(temp, hum, moisture_raw, moisture_smoothed, light, pump, scenario, result, alert_str, status_str="ONLINE"):
     """Clears the screen and draws the live telemetry matrix."""
     os.system('cls' if os.name == 'nt' else 'clear')
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -291,8 +292,10 @@ def serial_loop():
                     pass
                 break  
 
-            except json.JSONDecodeError:
-                logging.warning(f"Could not parse line as JSON: {line}")
+            except json.JSONDecodeError as parse_err:
+                # This captures the exact line and why it failed in your error log
+                logging.warning(f"Malformed JSON packet skipped. Error: {parse_err} | Received String: '{line}'")
+                print("[WARN] Received a partial or corrupt data packet. Skipping frame safely...")
             except Exception as loop_err:
                 logging.warning(f"Unexpected loop error: {loop_err}")
                 time.sleep(1)
@@ -336,6 +339,21 @@ def view_log_file():
         return {"headers": headers, "rows": rows}
     except Exception as e:
         return {"error": str(e), "rows": [], "headers": []}
+
+@app.post("/control")
+async def update_system_control(payload: dict):
+    global latest_data
+    with data_lock:
+        latest_data["manual_override"] = payload.get("manual_override", False)
+        latest_data["manual_pump_state"] = payload.get("manual_pump_state", False)
+        
+        # If manual control is true, update the system logic scenario text immediately
+        if latest_data["manual_override"]:
+            latest_data["Scenario"] = "MANUAL OVERRIDE ACTIVE"
+            latest_data["Pump"] = latest_data["manual_pump_state"]
+            
+    write_output_file()
+    return {"status": "success", "current_state": latest_data}
 
 # Serve frontend static files — must be mounted after all API routes
 app.mount("/", StaticFiles(directory=".", html=True), name="static")

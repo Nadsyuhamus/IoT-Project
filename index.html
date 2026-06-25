@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agrino</title>
-    <meta name="theme-color" content="#00c26f">
+    <meta name="theme-color" content="#10b981">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,14 +12,14 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <link rel="stylesheet" href="style.css">
-    <script src="/chart.min.js"></script>
+    <script src="chart.min.js"></script>
 </head>
 <body>
 
     <header class="dashboard-header">
-        <div>
+        <div class="header-branding-block">
             <h1><span>AGRINO</span></h1>
-            <div style="font-size:10px;letter-spacing:0.2em;color:var(--text-mid);margin-top:5px;">ML-POWERED IRRIGATION CONTROL · REAL-TIME TELEMETRY</div>
+            <div class="header-subtitle">ML-POWERED IRRIGATION CONTROL · REAL-TIME TELEMETRY</div>
         </div>
         <div class="system-meta">
             <span>STATUS: <strong id="net-status" class="status-offline">OFFLINE</strong></span>
@@ -27,7 +27,6 @@
         </div>
     </header>
 
-    <!-- Alert Banner -->
     <div id="alert-banner" class="alert-banner alert-hidden">
         <div class="alert-inner">
             <div class="alert-left">
@@ -47,18 +46,18 @@
 
     <main class="dashboard-grid">
         
-        <section class="card gauge-card">
+        <section class="card gauge-card" id="card-moisture">
             <h3>Soil Moisture</h3>
             <div class="value-display"><span id="val-moisture">--</span>%</div>
             <p class="sub-text">Smoothed: <span id="val-moisture-smooth">--</span>%</p>
         </section>
 
-        <section class="card gauge-card">
+        <section class="card gauge-card" id="card-temp">
             <h3>Temperature</h3>
             <div class="value-display"><span id="val-temp">--</span>°C</div>
         </section>
 
-        <section class="card gauge-card">
+        <section class="card gauge-card" id="card-humidity">
             <h3>Humidity</h3>
             <div class="value-display"><span id="val-humidity">--</span>%</div>
         </section>
@@ -83,10 +82,22 @@
         <section class="card control-card">
             <h3>System Controls</h3>
             <div class="control-row">
-                <div class="valve-indicator">
-                    <span>Valve State:</span>
-                    <strong id="val-pump">CLOSED</strong>
+                <div class="valve-indicator" style="display: flex; gap: 24px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span>Valve State:</span>
+                        <span id="val-pump-led" class="led-pump led-pump-closed"></span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 12px; border-left: 1px solid var(--border); padding-left: 24px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: var(--text-mid); user-select: none;">
+                            <input type="checkbox" id="override-checkbox" onchange="handleOverrideToggle(this.checked)" style="accent-color: var(--accent); cursor: pointer;"> OVERRIDE AUTOMATION
+                        </label>
+                        <button id="manual-pump-btn" class="download-btn" onclick="handleManualPumpClick()" style="padding: 6px 12px; font-size: 11px; height: auto;" disabled>
+                            VALVE: OFF
+                        </button>
+                    </div>
                 </div>
+                
                 <button class="download-btn" onclick="openLogModal()">
                     <img src="https://img.icons8.com/color/96/folder-invoices--v1.png" alt="Folder Icon" width="40">
                     <span>VIEW SAVED LOG FILE</span>
@@ -103,7 +114,32 @@
 
     </main>
 
-    <!-- Log Viewer Modal -->
+    <footer class="dashboard-footer-xl">
+        <div class="footer-course">
+            Course:<span>SAIA 3353 Machine Learning for IoT</span>
+        </div>
+
+        <div class="footer-cohort">
+            <div class="cohort-label">System Developer:</div>
+            <div class="cohort-members">
+                <div class="member leader">
+                    <span class="member-name">Areesha Nabila</span>
+                    <span class="badge-leader">Leader</span>
+                </div>
+                <span class="footer-split">|</span>
+                <div class="member">Asyura Anwar</div>
+                <span class="footer-split">|</span>
+                <div class="member">Faqihah Firhat</div>
+                <span class="footer-split">|</span>
+                <div class="member">Shirlyn Siew</div>
+                <span class="footer-split">|</span>
+                <div class="member">Nadsyuha Mustafa</div>
+                <span class="footer-split">|</span>
+                <div class="member">Wajeeha Hizam</div>
+            </div>
+        </div>
+    </footer>
+
     <div id="log-modal" class="modal-overlay" onclick="closeLogModal(event)">
         <div class="modal-box">
             <div class="modal-header">
