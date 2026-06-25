@@ -5,7 +5,7 @@
  * and dynamic multi-dataset Chart.js updates.
  */
 
-const API_URL = "http://localhost:8001/latest";
+const API_URL = "http://127.0.0.1:8001/latest";
 const FETCH_INTERVAL = 2000; // Poll the Python FastAPI backend every 2000ms (2 seconds)
 
 let telemetryChart = null;
@@ -90,6 +90,7 @@ async function fetchLatestData() {
         // State 1: API is running but waiting for physical microchip data transmission
         if (data.status === "waiting_for_data") {
             updateConnectionStatus("CONNECTED (AWAITING HARDWARE)", "status-offline", "led-dot led-off");
+            showAlert("AWAITING HARDWARE", "Sensor bridge is online but no microcontroller data received yet.", "warning");
             return;
         }
 
@@ -112,15 +113,24 @@ async function fetchLatestData() {
 
         // Evaluate logical rules against current values to apply appropriate UI highlight colors
         const alertEl = document.getElementById('display-alert');
-        if (data.Soil_Moisture < 30) {
+        const isSensorErr = data.Scenario === "SENS ERR";
+
+        if (isSensorErr) {
+            alertEl.innerText = "SENSOR ERROR";
+            alertEl.className = "status-text text-alert";
+            showAlert("SENSOR NOT CONNECTED", "One or more sensors are not responding — check all wiring and connections.", "warning");
+        } else if (data.Soil_Moisture < 30) {
             alertEl.innerText = "CRITICAL DRY";
             alertEl.className = "status-text text-alert";
+            showAlert("CRITICAL DRY / SENSOR CHECK", `Soil moisture is at ${data.Soil_Moisture}% — critically dry or sensor may be disconnected. Check soil and wiring.`, "error");
         } else if (data.irrigation_recommended) {
             alertEl.innerText = "ML IRRIGATION ACTIVE";
             alertEl.className = "status-text text-warning";
+            clearAlert();
         } else {
             alertEl.innerText = "SYSTEM OK";
             alertEl.className = "status-text text-ok";
+            clearAlert();
         }
 
         // Synchronize valve actuator text representations
@@ -194,7 +204,7 @@ function updateConnectionStatus(text, statusClass, ledClass) {
  */
 function triggerFaultUI(errorMessage) {
     updateConnectionStatus("SYSTEM FAULT", "status-offline", "led-dot led-on");
-    
+
     const alertEl = document.getElementById('display-alert');
     if (alertEl) {
         alertEl.innerText = errorMessage;
@@ -206,14 +216,83 @@ function triggerFaultUI(errorMessage) {
         pumpEl.innerText = "CLOSED (SAFETY SHUTDOWN)";
         pumpEl.style.color = "#ff3333";
     }
+
+    const messages = {
+        "HARDWARE DISCONNECTED": "Arduino or serial device is not transmitting. Check USB connection.",
+        "BACKEND SERVICE OFFLINE": "Cannot reach the sensor bridge at port 8001. Ensure bridge.py is running."
+    };
+    showAlert(errorMessage, messages[errorMessage] || "An unknown system fault has occurred.", "error");
+}
+
+/**
+ * 7. ALERT BANNER CONTROLLER
+ */
+let alertDismissed = false;
+
+function showAlert(title, message, type) {
+    if (alertDismissed) return;
+    const banner = document.getElementById('alert-banner');
+    const titleEl = document.getElementById('alert-title');
+    const msgEl = document.getElementById('alert-msg');
+    const iconEl = document.getElementById('alert-icon');
+    const timeEl = document.getElementById('alert-time');
+
+    titleEl.innerText = title;
+    msgEl.innerText = message;
+    timeEl.innerText = new Date().toLocaleTimeString();
+    iconEl.innerText = type === 'error' ? '⛔' : '⚠';
+
+    banner.className = `alert-banner alert-${type}`;
+}
+
+function clearAlert() {
+    alertDismissed = false;
+    const banner = document.getElementById('alert-banner');
+    banner.className = 'alert-banner alert-hidden';
+}
+
+function dismissAlert() {
+    alertDismissed = true;
+    const banner = document.getElementById('alert-banner');
+    banner.className = 'alert-banner alert-hidden';
 }
 
 /**
  * 7. CORE LIFE-CYCLE EVENT LISTENER
  * Attaches the execution routines as soon as the DOM finishes building.
  */
+async function openLogModal() {
+    document.getElementById('log-modal').style.display = 'flex';
+    const container = document.getElementById('log-table-container');
+    container.innerHTML = 'Loading...';
+    try {
+        const res = await fetch('http://127.0.0.1:8001/view-log');
+        const data = await res.json();
+        if (data.error || !data.headers.length) {
+            container.innerHTML = `<p style="color:#8e8e93;">${data.error || 'No data yet.'}</p>`;
+            return;
+        }
+        let html = '<table class="log-table"><thead><tr>';
+        data.headers.forEach(h => { html += `<th>${h}</th>`; });
+        html += '</tr></thead><tbody>';
+        [...data.rows].reverse().forEach(row => {
+            html += '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<p style="color:#ff3333;">Failed to load log data.</p>';
+    }
+}
+
+function closeLogModal(event) {
+    if (!event || event.target === document.getElementById('log-modal') || event.target.classList.contains('modal-close-btn')) {
+        document.getElementById('log-modal').style.display = 'none';
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     initChart();
     setInterval(fetchLatestData, FETCH_INTERVAL);
-    fetchLatestData(); // Execute immediate initial check frame
+    fetchLatestData();
 });

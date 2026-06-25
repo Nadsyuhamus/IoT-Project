@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # ── CONFIGURATION ──────────────────────────────────────────────────────
-SERIAL_PORT   = "COM6"          
+SERIAL_PORT   = "/dev/cu.usbserial-120"          
 BAUD_RATE     = 9600
 MODEL_PATH    = "model_xgb.joblib"
 SCALER_PATH   = "scaler.joblib"
@@ -295,10 +295,22 @@ def health_check():
 
 @app.get("/download-log")
 def download_log_file():
-    """Allows the Web Page Image Button to instantly extract the live logging CSV spreadsheet."""
     if os.path.exists(CSV_LOG_FILE):
         return FileResponse(CSV_LOG_FILE, media_type='text/csv', filename="agriculture_telemetry_history.csv")
     return {"error": "Log file not generated yet. Awaiting initial hardware transmission stream."}
+
+@app.get("/view-log")
+def view_log_file():
+    if not os.path.exists(CSV_LOG_FILE):
+        return {"error": "Log file not generated yet.", "rows": [], "headers": []}
+    try:
+        with open(CSV_LOG_FILE, "r") as f:
+            reader = csv.reader(f)
+            headers = next(reader, [])
+            rows = list(reader)[-100:]
+        return {"headers": headers, "rows": rows}
+    except Exception as e:
+        return {"error": str(e), "rows": [], "headers": []}
 
 # ── EXECUTION ENTRY POINT ───────────────────────────────────────────────
 if __name__ == "__main__":

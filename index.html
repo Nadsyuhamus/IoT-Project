@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Agriculture Mission Control</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="node_modules/chart.js/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -16,6 +16,24 @@
             <div id="fault-led" class="led-dot led-off"></div>
         </div>
     </header>
+
+    <!-- Alert Banner -->
+    <div id="alert-banner" class="alert-banner alert-hidden">
+        <div class="alert-inner">
+            <div class="alert-left">
+                <span class="alert-pulse"></span>
+                <span class="alert-icon" id="alert-icon">⚠</span>
+                <div class="alert-text">
+                    <span class="alert-title" id="alert-title">SYSTEM FAULT</span>
+                    <span class="alert-msg" id="alert-msg"></span>
+                </div>
+            </div>
+            <div class="alert-right">
+                <span class="alert-time" id="alert-time"></span>
+                <button class="alert-dismiss" onclick="dismissAlert()">DISMISS ✕</button>
+            </div>
+        </div>
+    </div>
 
     <main class="dashboard-grid">
         
@@ -59,10 +77,10 @@
                     <span>Valve State:</span>
                     <strong id="val-pump">CLOSED</strong>
                 </div>
-                <a href="http://localhost:8001/download-log" class="download-btn" target="_blank">
+                <button class="download-btn" onclick="openLogModal()">
                     <img src="https://img.icons8.com/color/96/folder-invoices--v1.png" alt="Folder Icon" width="40">
                     <span>VIEW SAVED LOG FILE</span>
-                </a>
+                </button>
             </div>
         </section>
 
@@ -74,6 +92,22 @@
         </section>
 
     </main>
+
+    <!-- Log Viewer Modal -->
+    <div id="log-modal" class="modal-overlay" onclick="closeLogModal(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>TELEMETRY LOG — LAST 100 RECORDS</span>
+                <div class="modal-actions">
+                    <a href="http://127.0.0.1:8001/download-log" class="modal-download-btn" download>Download CSV</a>
+                    <button class="modal-close-btn" onclick="closeLogModal()">✕</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div id="log-table-container">Loading...</div>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
