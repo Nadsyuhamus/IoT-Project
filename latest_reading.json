@@ -11,6 +11,6 @@
   "baseline_triggered": true,
   "ml_baseline_disagree": false,
   "model_used": "XGBoost Regressor v1.0",
-  "timestamp": "2026-06-25T18:15:39.449645",
+  "timestamp": "2026-06-25T18:15:55.733278",
   "status": "ok"
 }
