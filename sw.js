@@ -1,4 +1,4 @@
-const CACHE = 'agrino-v1';
+const CACHE = 'agrino-v2';
 const STATIC = ['/', '/index.html', '/style.css', '/app.js'];
 
 self.addEventListener('install', e => {
