@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Agriculture Mission Control</title>
+    <title>Agrino</title>
     <link rel="stylesheet" href="style.css">
     <script src="node_modules/chart.js/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
     <header class="dashboard-header">
-        <h1>SMART AGRICULTURE INFERENCE SYSTEM</h1>
+        <div>
+            <h1><span>AGRINO</span></h1>
+            <div style="font-size:10px;letter-spacing:0.2em;color:var(--text-mid);margin-top:5px;">ML-POWERED IRRIGATION CONTROL · REAL-TIME TELEMETRY</div>
+        </div>
         <div class="system-meta">
-            <span>Status: <strong id="net-status" class="status-offline">OFFLINE</strong></span>
+            <span>STATUS: <strong id="net-status" class="status-offline">OFFLINE</strong></span>
             <div id="fault-led" class="led-dot led-off"></div>
         </div>
     </header>
@@ -99,7 +102,7 @@
             <div class="modal-header">
                 <span>TELEMETRY LOG — LAST 100 RECORDS</span>
                 <div class="modal-actions">
-                    <a href="http://127.0.0.1:8001/download-log" class="modal-download-btn" download>Download CSV</a>
+                    <a href="/download-log" class="modal-download-btn" download>Download CSV</a>
                     <button class="modal-close-btn" onclick="closeLogModal()">✕</button>
                 </div>
             </div>

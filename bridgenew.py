@@ -10,15 +10,34 @@ from datetime import datetime
 import joblib
 import numpy as np
 import serial
+import serial.tools.list_ports
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 # ── CONFIGURATION ──────────────────────────────────────────────────────
-SERIAL_PORT   = "/dev/cu.usbserial-120"          
 BAUD_RATE     = 9600
 MODEL_PATH    = "model_xgb.joblib"
+
+# ── AUTO-DETECT SERIAL PORT ────────────────────────────────────────────
+def find_arduino_port():
+    """Scan all serial ports and return the most likely Arduino port."""
+    KEYWORDS = ["arduino", "ch340", "ch341", "usb serial", "usbserial",
+                "usb-serial", "ttyusb", "ttyacm", "usbmodem"]
+    ports = serial.tools.list_ports.comports()
+    for port in ports:
+        desc = (port.description or "").lower()
+        hwid = (port.hwid or "").lower()
+        if any(k in desc or k in hwid for k in KEYWORDS):
+            print(f"[INFO] Auto-detected Arduino on {port.device} ({port.description})")
+            return port.device
+    # Fallback: return the first available port if nothing matched
+    if ports:
+        print(f"[WARN] No Arduino signature found. Trying first available port: {ports[0].device}")
+        return ports[0].device
+    return None
 SCALER_PATH   = "scaler.joblib"
 OUTPUT_FILE   = "latest_reading.json"
 CSV_LOG_FILE  = "sensor_history_log.csv"
@@ -178,16 +197,22 @@ def serial_loop():
     init_csv_file()
 
     while True:
+        SERIAL_PORT = find_arduino_port()
+        if not SERIAL_PORT:
+            print("[CRITICAL] No serial ports found. Is the Arduino plugged in?")
+            set_fault_state("NO SERIAL PORT FOUND")
+            time.sleep(5)
+            continue
         print(f"[INFO] Attempting to open serial port {SERIAL_PORT}...")
         try:
             ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=2)
-            time.sleep(2)  
+            time.sleep(2)
             print("[INFO] Serial connection established. Syncing matrix...")
         except Exception as conn_err:
             print(f"[CRITICAL] Unable to open {SERIAL_PORT}: {conn_err}")
             logging.warning(f"Serial open failed: {conn_err}")
             set_fault_state("SERIAL PORT REJECTED / DISCONNECTED")
-            time.sleep(5)  
+            time.sleep(5)
             continue
 
         # Inner loop: active data reading frame
@@ -291,7 +316,7 @@ def get_latest_reading():
 
 @app.get("/health")
 def health_check():
-    return {"status": "running", "serial_port": SERIAL_PORT}
+    return {"status": "running", "serial_port": find_arduino_port()}
 
 @app.get("/download-log")
 def download_log_file():
@@ -311,6 +336,9 @@ def view_log_file():
         return {"headers": headers, "rows": rows}
     except Exception as e:
         return {"error": str(e), "rows": [], "headers": []}
+
+# Serve frontend static files — must be mounted after all API routes
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 # ── EXECUTION ENTRY POINT ───────────────────────────────────────────────
 if __name__ == "__main__":
