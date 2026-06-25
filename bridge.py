@@ -9,13 +9,14 @@ from datetime import datetime
 
 import joblib
 import numpy as np
+import requests
 import serial
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # ── CONFIGURATION ──────────────────────────────────────────────────────
+# CHANGED: Reverted back to the verified Windows port to fix the No Such File Error
 SERIAL_PORT   = "/dev/cu.usbserial-120"          
 BAUD_RATE     = 9600
 MODEL_PATH    = "model_xgb.joblib"
@@ -28,6 +29,15 @@ API_PORT      = 8001
 
 # Preprocessing
 SMOOTHING_WINDOW = 5        # moving-average window for soil moisture
+
+# Blynk integration (lecturer-approved platform)
+BLYNK_TOKEN   = "_aSSbyfAnB14H0Bfwen09HNTkyA-KxMN"
+
+# CHANGED: Target the explicit regional cluster 'sgp1' directly to bypass network blocks
+BLYNK_BASE_URL = "https://sgp1.blynk.cloud/external/api/update"
+
+# Minimum seconds between Blynk pushes (free tier rate-limits frequent updates)
+BLYNK_PUSH_INTERVAL = 2.0
 
 # ── ERROR LOGGING (keeps the live matrix clean, but nothing is hidden) ──
 logging.basicConfig(
@@ -61,7 +71,7 @@ latest_data = {
 }
 data_lock = threading.Lock()
 
-# Moving-average buffer
+# Moving-average buffer (preprocessing step 1)
 moisture_window = deque(maxlen=SMOOTHING_WINDOW)
 
 # ── INITIALIZE CSV LOG FILE ────────────────────────────────────────────
@@ -98,7 +108,7 @@ def log_to_csv(temp, hum, moisture_raw, moisture_smoothed, light, pump, scenario
 
 # ── PRINT LIVE FEED MATRIX ─────────────────────────────────────────────
 def print_live_feed_matrix(temp, hum, moisture_raw, moisture_smoothed,
-                           light, pump, scenario, result, alert_str, status_str="ONLINE"):
+                           light, pump, scenario, result, alert_str):
     """Clears the screen and draws the live telemetry matrix."""
     os.system('cls' if os.name == 'nt' else 'clear')
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -107,7 +117,7 @@ def print_live_feed_matrix(temp, hum, moisture_raw, moisture_smoothed,
 
     print("┌──────────────────────────────────────────────────────────────┐")
     print("│         SMART AGRICULTURE SYSTEMS INTEGRATION MATRIX          │")
-    print(f"│  Time: {timestamp:<21} Status: {status_str:<24} │")
+    print(f"│  Time: {timestamp:<21} Status: ONLINE                │")
     print("├──────────────────────────────┬───────────────────────────────┤")
     print("│      ENVIRONMENT SENSORS     │       SYSTEM INFERENCE        │")
     print("├──────────────────────────────┼───────────────────────────────┤")
@@ -151,31 +161,29 @@ def write_output_file():
     except Exception as e:
         logging.warning(f"JSON write failed: {e}")
 
-# ── UPDATE STATE ON LOCAL FAULT ────────────────────────────────────────
-def set_fault_state(error_msg):
-    """Updates the internal state representation to declare a system fault."""
-    with data_lock:
-        latest_data.update({
-            "status": "fault",
-            "Scenario": "SYSTEM FAULT",
-            "Pump": False,
-            "irrigation_recommended": False
-        })
-    write_output_file()
-    
-    # Render a simplified fault panel directly to the local terminal
-    os.system('cls' if os.name == 'nt' else 'clear')
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print("┌──────────────────────────────────────────────────────────────┐")
-    print("│         SMART AGRICULTURE SYSTEMS INTEGRATION MATRIX          │")
-    print(f"│  Time: {timestamp:<21} Status: SYSTEM FAULT             │")
-    print("├──────────────────────────────────────────────────────────────┤")
-    print(f"│  CRITICAL ERROR: {error_msg:<43} │")
-    print("└──────────────────────────────────────────────────────────────┘")
+# ── SERIAL READING & CLOUD TRANSMISSION LOOP ───────────────────────────
+def push_fault_state(error_msg):
+    """Pushes an explicit fault state to the Blynk dashboard."""
+    fault_terminal = f"[{datetime.now().strftime('%H:%M:%S')}] SYSTEM ERROR: {error_msg}\n"
+    params = {
+        "token": BLYNK_TOKEN,
+        "v4": 0,                # close valve (safety mechanism)
+        "v5": "SYSTEM FAULT",   # status -> fault
+        "v6": "UNKNOWN",        # irrigation requirement ambiguous
+        "v7": fault_terminal,   # log to terminal widget
+        "v8": 1,                # turn ON red critical-error LED
+    }
+    try:
+        response = requests.get(BLYNK_BASE_URL, params=params, timeout=3)
+        print(f"[BLYNK-FAULT] {response.status_code} | {response.text}")
+    except Exception as e:
+        print(f"[BLYNK-FAULT] connection error: {e}")
+        logging.warning(f"Fault-state push failed: {e}")
 
 
 def serial_loop():
     init_csv_file()
+    last_blynk_push = 0.0   
 
     while True:
         print(f"[INFO] Attempting to open serial port {SERIAL_PORT}...")
@@ -183,10 +191,16 @@ def serial_loop():
             ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=2)
             time.sleep(2)  
             print("[INFO] Serial connection established. Syncing matrix...")
+            
+            # Connection recovered -> turn OFF the red error LED safely
+            try:
+                requests.get(BLYNK_BASE_URL, params={"token": BLYNK_TOKEN, "v8": 0}, timeout=3)
+            except Exception as e:
+                logging.warning(f"LED reset push failed: {e}")
         except Exception as conn_err:
             print(f"[CRITICAL] Unable to open {SERIAL_PORT}: {conn_err}")
             logging.warning(f"Serial open failed: {conn_err}")
-            set_fault_state("SERIAL PORT REJECTED / DISCONNECTED")
+            push_fault_state("SERIAL PORT REJECTED / DISCONNECTED")
             time.sleep(5)  
             continue
 
@@ -237,17 +251,20 @@ def serial_loop():
 
                 write_output_file()
 
+                # Process Alert design logic parameters
+                irrigation_needed_str = "YES" if result["irrigation_recommended"] else "NO"
                 if soil_moisture < 30:
                     logic_alert_str = "CRITICAL DRY"
                 elif result["irrigation_recommended"]:
                     logic_alert_str = "ML IRRIGATION ACTIVE"
                 else:
                     logic_alert_str = "SYSTEM OK"
+                valve_status_int = 1 if result["irrigation_recommended"] else 0
 
                 # 1. Output Live matrix visualization directly to terminal screen
                 print_live_feed_matrix(
                     temperature, humidity, soil_moisture, soil_moisture_smoothed,
-                    light, pump, scenario, result, logic_alert_str, status_str="ONLINE"
+                    light, pump, scenario, result, logic_alert_str
                 )
 
                 # 2. Append state results into your local CSV backup log
@@ -256,10 +273,40 @@ def serial_loop():
                     light, pump, scenario, result
                 )
 
+                # 3. Ship unified payload to Blynk Cloud to avoid connection rate-limiting blocks
+                terminal_line = (
+                    f"[{datetime.now().strftime('%H:%M:%S')}] "
+                    f"T={temperature}°C, H={humidity}%, SM={soil_moisture}% "
+                    f"| ML_Score={result['irrigation_prediction']}\n"
+                )
+                
+                if time.time() - last_blynk_push >= BLYNK_PUSH_INTERVAL:
+                    last_blynk_push = time.time()
+
+                    # CHANGED: Merged both numeric and text parameters into one safe network request
+                    unified_params = {
+                        "token": BLYNK_TOKEN,
+                        "v1": int(soil_moisture),
+                        "v2": temperature,
+                        "v3": humidity,
+                        "v4": valve_status_int,
+                        "v5": logic_alert_str,
+                        "v6": irrigation_needed_str,
+                        "v7": terminal_line,
+                        "v8": 0,  # Healthy operational status
+                    }
+                    
+                    try:
+                        resp = requests.get(BLYNK_BASE_URL, params=unified_params, timeout=3)
+                        if resp.status_code != 200:
+                            logging.warning(f"Blynk sync returned code {resp.status_code}: {resp.text}")
+                    except Exception as cloud_err:
+                        logging.warning(f"Blynk cloud transmission failed: {cloud_err}")
+
             except (serial.SerialException, OSError) as hardware_disconnect:
                 print("\n[CRITICAL] USB hardware disconnected mid-stream!")
                 logging.warning(f"Hardware disconnect: {hardware_disconnect}")
-                set_fault_state("USB WIRE UNPLUGGED DETECTED")
+                push_fault_state("USB WIRE UNPLUGGED DETECTED")
                 try:
                     ser.close()
                 except Exception:
@@ -272,17 +319,8 @@ def serial_loop():
                 logging.warning(f"Unexpected loop error: {loop_err}")
                 time.sleep(1)
 
-# ── REST API (Exposes endpoints for custom UI folder extraction widgets) ──
+# ── REST API (Exposes endpoints for file extraction widgets) ───────────
 app = FastAPI(title="Smart Agriculture - Live Sensor Bridge")
-
-# CORS middleware activation block
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.get("/latest")
 def get_latest_reading():
@@ -295,22 +333,10 @@ def health_check():
 
 @app.get("/download-log")
 def download_log_file():
+    """Allows the Web Page Image Button to instantly extract the live logging CSV spreadsheet."""
     if os.path.exists(CSV_LOG_FILE):
         return FileResponse(CSV_LOG_FILE, media_type='text/csv', filename="agriculture_telemetry_history.csv")
     return {"error": "Log file not generated yet. Awaiting initial hardware transmission stream."}
-
-@app.get("/view-log")
-def view_log_file():
-    if not os.path.exists(CSV_LOG_FILE):
-        return {"error": "Log file not generated yet.", "rows": [], "headers": []}
-    try:
-        with open(CSV_LOG_FILE, "r") as f:
-            reader = csv.reader(f)
-            headers = next(reader, [])
-            rows = list(reader)[-100:]
-        return {"headers": headers, "rows": rows}
-    except Exception as e:
-        return {"error": str(e), "rows": [], "headers": []}
 
 # ── EXECUTION ENTRY POINT ───────────────────────────────────────────────
 if __name__ == "__main__":
