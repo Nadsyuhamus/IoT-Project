@@ -1,6 +1,6 @@
 {
   "Temperature": 29.9,
-  "Humidity": 74.6,
+  "Humidity": 74.4,
   "Soil_Moisture": 0.0,
   "Soil_Moisture_Smoothed": 0.0,
   "Light": 0.92,
@@ -11,7 +11,7 @@
   "baseline_triggered": true,
   "ml_baseline_disagree": false,
   "model_used": "XGBoost Regressor v1.0",
-  "timestamp": "2026-06-25T21:11:40.900810",
+  "timestamp": "2026-06-25T21:12:11.649037",
   "status": "ok",
   "manual_override": true,
   "manual_pump_state": true
