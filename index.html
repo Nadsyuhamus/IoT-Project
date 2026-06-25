@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Agriculture Mission Control</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <header class="dashboard-header">
+        <h1>SMART AGRICULTURE INFERENCE SYSTEM</h1>
+        <div class="system-meta">
+            <span>Status: <strong id="net-status" class="status-offline">OFFLINE</strong></span>
+            <div id="fault-led" class="led-dot led-off"></div>
+        </div>
+    </header>
+
+    <main class="dashboard-grid">
+        
+        <section class="card gauge-card">
+            <h3>Soil Moisture</h3>
+            <div class="value-display"><span id="val-moisture">--</span>%</div>
+            <p class="sub-text">Smoothed: <span id="val-moisture-smooth">--</span>%</p>
+        </section>
+
+        <section class="card gauge-card">
+            <h3>Temperature</h3>
+            <div class="value-display"><span id="val-temp">--</span>°C</div>
+        </section>
+
+        <section class="card gauge-card">
+            <h3>Humidity</h3>
+            <div class="value-display"><span id="val-humidity">--</span>%</div>
+        </section>
+
+        <section class="card status-card">
+            <h3>System Status Logic</h3>
+            <div id="display-alert" class="status-text text-neutral">AWAITING STREAM</div>
+            <p class="sub-text">Scenario: <span id="val-scenario">--</span></p>
+        </section>
+
+        <section class="card status-card">
+            <h3>Irrigation Required?</h3>
+            <div id="display-irrigation" class="status-text text-neutral">--</div>
+            <p class="sub-text">ML Pred Score: <span id="val-ml-score">--</span></p>
+        </section>
+
+        <section class="card terminal-card">
+            <h3>Live Streaming Log Terminal</h3>
+            <div id="terminal-box" class="terminal-box">[SYSTEM LOG] Base console active. Awaiting initial connection packet stream...</div>
+        </section>
+
+        <section class="card control-card">
+            <h3>System Controls</h3>
+            <div class="control-row">
+                <div class="valve-indicator">
+                    <span>Valve State:</span>
+                    <strong id="val-pump">CLOSED</strong>
+                </div>
+                <a href="http://localhost:8001/download-log" class="download-btn" target="_blank">
+                    <img src="https://img.icons8.com/color/96/folder-invoices--v1.png" alt="Folder Icon" width="40">
+                    <span>VIEW SAVED LOG FILE</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="card chart-card">
+            <h3>Telemetry Waveform Real-Time Stream</h3>
+            <div class="chart-container">
+                <canvas id="telemetryChart"></canvas>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
