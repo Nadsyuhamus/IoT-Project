@@ -4,3 +4,4 @@ sensor_history_log.csv
 latest_reading.json
 __pycache__/
 *.pyc
+latest_reading.json
