@@ -7,3 +7,8 @@
 2026-06-25 03:48:39,275  WARNING  Serial open failed: could not open port 'COM6': PermissionError(13, 'Access is denied.', None, 5)
 2026-06-25 03:48:44,595  WARNING  Serial open failed: could not open port 'COM6': PermissionError(13, 'Access is denied.', None, 5)
 2026-06-25 03:48:50,064  WARNING  Serial open failed: could not open port 'COM6': PermissionError(13, 'Access is denied.', None, 5)
+2026-06-25 17:55:23,657  WARNING  Serial open failed: [Errno 2] could not open port /dev/cu.usbserial-110: [Errno 2] No such file or directory: '/dev/cu.usbserial-110'
+2026-06-25 17:55:45,817  WARNING  Serial open failed: [Errno 2] could not open port /dev/cu.usbserial-110: [Errno 2] No such file or directory: '/dev/cu.usbserial-110'
+2026-06-25 17:55:50,829  WARNING  Serial open failed: [Errno 2] could not open port /dev/cu.usbserial-110: [Errno 2] No such file or directory: '/dev/cu.usbserial-110'
+2026-06-25 18:02:28,233  WARNING  Hardware disconnect: read failed: [Errno 6] Device not configured
+2026-06-25 18:02:28,253  WARNING  Serial open failed: [Errno 2] could not open port /dev/cu.usbserial-120: [Errno 2] No such file or directory: '/dev/cu.usbserial-120'

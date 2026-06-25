@@ -74,7 +74,7 @@ function initChart() {
 
 async function fetchLatestData() {
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(API_URL, { headers: { 'ngrok-skip-browser-warning': '1' } });
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
         const data = await response.json();
@@ -213,7 +213,7 @@ async function openLogModal() {
     const container = document.getElementById('log-table-container');
     container.innerHTML = 'Loading...';
     try {
-        const res = await fetch('/view-log');
+        const res = await fetch('/view-log', { headers: { 'ngrok-skip-browser-warning': '1' } });
         const data = await res.json();
         if (data.error || !data.headers.length) {
             container.innerHTML = `<p style="padding:16px;font-family:monospace;color:#3a5242;">${data.error || 'No data yet.'}</p>`;
